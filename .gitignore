@@ -1,0 +1,20 @@
+# 설치·빌드하면 생기는 것 (저장소에 올리지 않음)
+node_modules/
+www/
+out/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+android/capacitor-cordova-android-plugins/
+firebase/functions/node_modules/
+firebase/.firebase/
+
+# 비밀 — 절대 올리지 않음
+android/keystore.properties
+*.jks
+*.keystore

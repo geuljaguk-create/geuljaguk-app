@@ -1,0 +1,87 @@
+# 글자국 앱 자동 빌드
+# - 코드가 바뀌면(main) 또는 Actions 탭에서 'Run workflow'를 누르면 실행
+# - 결과: Actions → 해당 실행 → Artifacts 에서 '글자국-사용자용' / '글자국-운영자용' APK 내려받기
+# - 출시용(AAB)은 'Run workflow' 에서 release 를 켜면 만들어짐 (Secrets 필요)
+name: 앱 빌드
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'firebase/**']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: '출시용 AAB도 만들기 (Secrets 필요)'
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 패키지 설치
+        run: npm ci
+
+      - name: 운영자용 APK
+        run: |
+          python3 tools/prepare_www.py --admin
+          npx cap sync android
+          (cd android && ./gradlew assembleDebug --no-daemon)
+          mkdir -p out && cp android/app/build/outputs/apk/debug/app-debug.apk "out/글자국-운영자용.apk"
+
+      - name: 사용자용 APK
+        run: |
+          python3 tools/prepare_www.py
+          npx cap sync android
+          (cd android && ./gradlew assembleDebug --no-daemon)
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/글자국-사용자용.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 글자국-사용자용
+          path: out/글자국-사용자용.apk
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 글자국-운영자용
+          path: out/글자국-운영자용.apk
+          retention-days: 30
+
+      - name: 출시용 AAB (서명)
+        if: ${{ inputs.release }}
+        env:
+          GJ_KEYSTORE_BASE64: ${{ secrets.GJ_KEYSTORE_BASE64 }}
+          GJ_KEYSTORE_PASSWORD: ${{ secrets.GJ_KEYSTORE_PASSWORD }}
+          GJ_KEY_ALIAS: ${{ secrets.GJ_KEY_ALIAS }}
+          GJ_KEY_PASSWORD: ${{ secrets.GJ_KEY_PASSWORD }}
+        run: |
+          echo "$GJ_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export GJ_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
+          python3 tools/prepare_www.py
+          npx cap sync android
+          (cd android && ./gradlew bundleRelease --no-daemon)
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/글자국-출시용.aab"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.release }}
+        with:
+          name: 글자국-출시용-AAB
+          path: out/글자국-출시용.aab
+          retention-days: 30

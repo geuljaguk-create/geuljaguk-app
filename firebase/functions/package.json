@@ -1,0 +1,13 @@
+{
+  "name": "geuljaguk-functions",
+  "description": "글자국 서버 함수 (카카오 로그인·회원 탈퇴·댓글 알림)",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.3.2"
+  },
+  "private": true
+}

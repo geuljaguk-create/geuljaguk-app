@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="push_color">#ff2e4a3b</color>
+    <color name="w_accent">#ff2e4a3b</color>
+    <color name="w_bg">#ffffffff</color>
+    <color name="w_ink">#ff1d2a22</color>
+    <color name="w_ink2">#ff7c8a80</color>
+    <color name="w_stroke">#14000000</color>
+</resources>

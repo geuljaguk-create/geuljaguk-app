@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.geuljaguk.app",
+      "sha256_cert_fingerprints": [
+        "3B:55:83:D7:79:EB:45:E0:15:A5:C4:8D:DA:DA:BF:9E:71:CB:AD:2C:6E:E1:EB:C8:C0:88:B6:41:C5:20:AD:ED",
+        "D7:E3:0B:A7:93:0C:AB:40:6F:72:1C:0D:BE:41:D2:8F:D4:23:51:7E:A5:2B:F6:63:3A:78:63:43:56:4B:AB:A7"
+      ]
+    }
+  }
+]

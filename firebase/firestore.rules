@@ -1,0 +1,176 @@
+rules_version = '2';
+// 글자국 댓글 커뮤니티 보안 규칙 (v11.114 — 자유게시판 추가 / v11.104 — 댓글 수정, 1인 1신고, 닉네임 중복 방지, 운영자 신고 관리)
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 전체를 붙여넣고 [게시]
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    // v11.104: 운영자 = admins/{uid} 문서가 있는 사람 (Firebase 콘솔에서 직접 만듦)
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    // ---------- 댓글 ----------
+    match /comments/{commentId} {
+      // 누구나 읽기 가능 (숨김 처리된 댓글은 앱에서 걸러냄)
+      allow read: if true;
+
+      // 쓰기: 로그인(익명 포함)한 본인 이름으로만, 200자 이하, 처음 값은 0/빈 값
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['quoteId','text','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden','parentId'])
+        && (!('parentId' in request.resource.data) || (request.resource.data.parentId is string && request.resource.data.parentId.size() > 0 && request.resource.data.parentId.size() <= 64))
+        && request.resource.data.authorUid == request.auth.uid
+        && (request.resource.data.quoteId is int
+            // v11.114: 자유게시판 글의 댓글은 quoteId = 'p_글번호'
+            || (request.resource.data.quoteId is string && request.resource.data.quoteId.matches('p_[A-Za-z0-9]{1,40}')
+                && exists(/databases/$(database)/documents/posts/$(request.resource.data.quoteId.split('_')[1]))))
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 200
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() >= 1
+        && request.resource.data.authorName.size() <= 12
+        && (!('authorAvatar' in request.resource.data) || (request.resource.data.authorAvatar is string && request.resource.data.authorAvatar.size() <= 8))
+        && (!('authorPhoto' in request.resource.data) || (request.resource.data.authorPhoto is string && request.resource.data.authorPhoto.size() <= 12000))
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.likeCount == 0
+        && request.resource.data.likedBy.size() == 0
+        && request.resource.data.reportCount == 0
+        && request.resource.data.hidden == false;
+
+      // 삭제: 작성자 본인만
+      allow delete: if signedIn() && (resource.data.authorUid == request.auth.uid || isAdmin());   // 작성자 또는 운영자
+
+      // v11.88: 수정은 세 가지만 허용
+      //  ① 공감 — 본인 ID만 넣고 빼기(±1), 내 댓글도 가능
+      //  ② 신고 — 남의 댓글에만, 한 사람당 한 번(reportedBy에 본인 ID), 취소 가능 (자동 숨김 없음)
+      //  ③ 내용 수정 — 작성자 본인만, 200자 이하, 수정 시각 기록
+      allow update: if signedIn() && (likeUpdate() || reportUpdate() || editUpdate() || isAdmin());
+    }
+    function likeUpdate() {
+      let a = request.resource.data; let b = resource.data;
+      return a.diff(b).affectedKeys().hasOnly(['likeCount','likedBy'])
+        && a.likedBy.removeAll(b.likedBy).hasOnly([request.auth.uid])
+        && b.likedBy.removeAll(a.likedBy).hasOnly([request.auth.uid])
+        && (a.likeCount - b.likeCount) in [-1, 0, 1]
+        && a.likeCount == a.likedBy.size();
+    }
+    function reportUpdate() {
+      let a = request.resource.data; let b = resource.data;
+      let ob = b.get('reportedBy', []);
+      return a.diff(b).affectedKeys().hasOnly(['reportCount','reportedBy','hidden'])
+        && b.authorUid != request.auth.uid
+        && a.reportedBy is list
+        && a.reportedBy.removeAll(ob).hasOnly([request.auth.uid])
+        && ob.removeAll(a.reportedBy).hasOnly([request.auth.uid])
+        && (a.reportCount - b.reportCount) in [-1, 0, 1]
+        && (a.reportCount - b.reportCount) == (a.reportedBy.size() - ob.size())
+        && a.hidden == b.hidden;   // v11.104: 신고로 자동 숨김 없음 (운영자가 삭제)
+    }
+    function editUpdate() {
+      let a = request.resource.data; let b = resource.data;
+      return a.diff(b).affectedKeys().hasOnly(['text','editedAt'])
+        && b.authorUid == request.auth.uid
+        && a.text is string && a.text.size() > 0 && a.text.size() <= 200
+        && a.editedAt == request.time;
+    }
+
+    // ---------- v11.114: 자유게시판 글 ----------
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['text','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden'])
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() >= 1
+        && request.resource.data.authorName.size() <= 12
+        && (!('authorAvatar' in request.resource.data) || (request.resource.data.authorAvatar is string && request.resource.data.authorAvatar.size() <= 8))
+        && (!('authorPhoto' in request.resource.data) || (request.resource.data.authorPhoto is string && request.resource.data.authorPhoto.size() <= 12000))
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.likeCount == 0
+        && request.resource.data.likedBy.size() == 0
+        && request.resource.data.reportCount == 0
+        && request.resource.data.hidden == false;
+      allow delete: if signedIn() && (resource.data.authorUid == request.auth.uid || isAdmin());
+      allow update: if signedIn() && (likeUpdate() || reportUpdate() || postEditUpdate() || isAdmin());
+    }
+    function postEditUpdate() {
+      let a = request.resource.data; let b = resource.data;
+      return a.diff(b).affectedKeys().hasOnly(['text','editedAt'])
+        && b.authorUid == request.auth.uid
+        && a.text is string && a.text.size() > 0 && a.text.size() <= 500
+        && a.editedAt == request.time;
+    }
+
+    // ---------- 회원 프로필 (본인만 읽고 쓰기, 닉네임은 처음 한 번만 정함) ----------
+    function validProfile() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nickname','avatar','photo','photoThumb','nicknameSetAt','updatedAt'])
+        && d.nickname is string && d.nickname.size() >= 2 && d.nickname.size() <= 10
+        && d.avatar is string && d.avatar.size() <= 8
+        && (!('photo' in d) || (d.photo is string && d.photo.size() <= 80000))
+        && (!('photoThumb' in d) || (d.photoThumb is string && d.photoThumb.size() <= 12000));
+    }
+    match /users/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid && validProfile()
+        && request.resource.data.nicknameSetAt == request.time
+        // v11.99: 닉네임 등록부(nicknames)에 내 이름으로 함께 올린 경우만 (중복 닉네임 방지)
+        && getAfter(/databases/$(database)/documents/nicknames/$(request.resource.data.nickname.lower())).data.uid == request.auth.uid;
+      // v11.53: 닉네임은 한 번 정하면 바꿀 수 없음 → 사진·아이콘만 바꾸는 수정만 허용
+      allow update: if signedIn() && request.auth.uid == uid && validProfile()
+        && request.resource.data.nickname == resource.data.nickname
+        && request.resource.data.get('nicknameSetAt', null) == resource.data.get('nicknameSetAt', null);
+    }
+
+    // ---------- v11.111: 댓글 알림 주소 (본인만 쓰고 지움, 서버 함수가 읽어서 알림을 보냄) ----------
+    match /pushTokens/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['token','on','updatedAt'])
+        && request.resource.data.token is string && request.resource.data.token.size() <= 4096
+        && request.resource.data.on is bool;
+    }
+
+    // ---------- v11.99: 닉네임 등록부 (문서 이름 = 소문자 닉네임, 먼저 정한 사람 것) ----------
+    match /nicknames/{name} {
+      allow get: if true;            // 중복 확인용 (목록 보기는 불가)
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid','at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time
+        && name.size() >= 2 && name.size() <= 10 && name == name.lower();
+      allow update: if false;        // 이미 있는 닉네임은 덮어쓸 수 없음
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;   // 탈퇴 시 풀기
+    }
+
+    // ---------- 신고 내역 (운영자만 콘솔에서 확인) ----------
+    match /reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 200;
+      allow read, delete: if isAdmin();   // 운영자만 보고 정리
+      allow update: if false;
+    }
+
+    // ---------- v11.104: 운영자 명단 (본인 것만 확인 가능, 추가·삭제는 콘솔에서만) ----------
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    // ---------- 명언별 댓글 수 ----------
+    match /quoteStats/{quoteId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['count'])
+        && request.resource.data.count == 1;
+      allow update: if signedIn()
+        && request.resource.data.keys().hasOnly(['count'])
+        && (request.resource.data.count - resource.data.count) in [-1, 1];
+    }
+  }
+}

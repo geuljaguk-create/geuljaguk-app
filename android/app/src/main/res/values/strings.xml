@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">글자국</string>
+    <string name="title_activity_main">글자국</string>
+    <string name="package_name">com.geuljaguk.app</string>
+    <string name="custom_url_scheme">com.geuljaguk.app</string>
+    <!-- 카카오 로그인 (네이티브 앱 키) -->
+    <string name="kakao_app_key">1a9a1bd114c8a2686acebc89bc11a530</string>
+    <string name="kakao_scheme">kakao1a9a1bd114c8a2686acebc89bc11a530</string>
+</resources>

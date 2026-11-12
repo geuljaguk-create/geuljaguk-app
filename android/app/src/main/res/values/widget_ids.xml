@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="w_bg" />
+    <item type="id" name="w_icon" />
+    <item type="id" name="w_label" />
+    <item type="id" name="w_root" />
+    <item type="id" name="w_sub" />
+    <item type="id" name="w_text" />
+</resources>

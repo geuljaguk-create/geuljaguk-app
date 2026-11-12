@@ -1,0 +1,26 @@
+{
+	"appId": "com.geuljaguk.app",
+	"appName": "글자국",
+	"webDir": "www",
+	"android": {
+		"backgroundColor": "#2E4A3B",
+		"adjustMarginsForEdgeToEdge": "auto"
+	},
+	"plugins": {
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_geuljaguk",
+			"iconColor": "#2E4A3B"
+		},
+		"FirebaseAuthentication": {
+			"skipNativeAuth": true,
+			"providers": [
+				"google.com",
+				"apple.com"
+			]
+		}
+	},
+	"ios": {
+		"contentInset": "never",
+		"backgroundColor": "#2E4A3B"
+	}
+}
