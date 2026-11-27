@@ -138,7 +138,7 @@ exports.notify = onCall({ region: REGION }, async (req) => {
       if (!post.exists) return { ok: false };
       const to = post.get('authorUid');
       if (!to || to === uid) return { ok: false };
-      await pushTo(to, '💬 내 글에 댓글이 달렸어요', `${cut(c.authorName, 10)}: ${cut(c.text, 40)}`, { qid, cid: id, type: 'postComment' });
+      await pushTo(to, '💬 내 명언에 댓글이 달렸어요', `${cut(c.authorName, 10)}: ${cut(c.text, 40)}`, { qid, cid: id, type: 'postComment' });
     }
     return { ok: true };
   }
@@ -150,7 +150,7 @@ exports.notify = onCall({ region: REGION }, async (req) => {
     if (!(d.likedBy || []).includes(uid) || d.authorUid === uid) return { ok: false };
     if (!(await once(`${kind === 'like' ? 'l' : 'pl'}_${id}_${uid}`))) return { ok: false };
     if (kind === 'like') await pushTo(d.authorUid, '❤️ 내 댓글에 공감이 달렸어요', `"${cut(d.text, 30)}" · 공감 ${d.likeCount || 1}개`, { qid: String(d.quoteId), cid: id, type: 'like' });
-    else await pushTo(d.authorUid, '❤️ 내 글에 공감이 달렸어요', `"${cut(d.text, 30)}" · 공감 ${d.likeCount || 1}개`, { qid: `p_${id}`, cid: id, type: 'postLike' });
+    else await pushTo(d.authorUid, '❤️ 내 명언에 공감이 달렸어요', `"${cut(d.text, 30)}" · 공감 ${d.likeCount || 1}개`, { qid: `p_${id}`, cid: id, type: 'postLike' });
     return { ok: true };
   }
   throw new HttpsError('invalid-argument', 'bad kind');

@@ -1358,7 +1358,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .comment-item.c-flash{animation:cflash 1.6s ease}
 @keyframes cflash{0%,60%{background:rgba(46,125,79,.12)}100%{background:transparent}}
 
-/* ===== v11.114: 자유게시판 ===== */
+/* ===== v11.114: 자유게시판 → v11.124: '나만의 명언' ===== */
 .board-page{position:fixed;inset:0;z-index:250;background:#f6f4ee;color:#1d2a22;display:flex;flex-direction:column;transform:translateX(104%);transition:transform .32s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0px);visibility:hidden}
 .board-page.open{transform:translateX(0);visibility:visible}
 .bp-top{display:flex;align-items:center;gap:6px;padding:12px 14px 8px}
@@ -1396,6 +1396,28 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-send{border:none;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:700;font-size:.95rem;border-radius:999px;padding:10px 22px;cursor:pointer}
 .bp-send:disabled{opacity:.45}
 .board-page .memo-confirm{position:fixed;inset:0;border-radius:0;z-index:256}
+/* v11.124: 나만의 명언 — 카드와 아래에서 올라오는 쓰기 창 */
+.bp-quote-text{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:1.08rem;line-height:1.75;color:#1d2a22;-webkit-line-clamp:6}
+.bp-by{text-align:right;font-family:'Nanum Myeongjo',serif;font-size:.9rem;color:#4f5e55;margin-top:6px}
+.bp-note{margin-top:10px;padding:10px 12px;background:#f6f4ee;border-radius:12px;font-size:.9rem;line-height:1.6;color:#475569;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.sq-note{margin-top:8px;font-size:.85rem;line-height:1.55;color:#64748b;text-align:left;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bp-compose{align-items:flex-end;padding:0}
+.bp-compose.closing{animation:mcOut .2s ease forwards}
+.bp-compose.closing .bp-sheet{animation:bpDown .22s ease forwards}
+@keyframes mcOut{to{opacity:0}}
+@keyframes bpUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes bpDown{to{transform:translateY(100%)}}
+.bp-sheet{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:#fff;border-radius:22px 22px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px rgba(0,0,0,.18);animation:bpUp .3s cubic-bezier(.16,1,.3,1);box-sizing:border-box}
+.bp-grab{width:40px;height:5px;border-radius:3px;background:#d8ded9;margin:4px auto 10px}
+.bp-field{display:block;margin-bottom:12px}
+.bp-label{display:flex;justify-content:space-between;align-items:baseline;font-size:.88rem;font-weight:700;color:#33423a;margin-bottom:6px}
+.bp-label small{font-size:.76rem;font-weight:500;color:#94a3b8}
+.bp-in{width:100%;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:1rem;line-height:1.55;color:#1d2a22;background:#f8faf9;outline:none;resize:none}
+.bp-in:focus{border-color:#2e4a3b;background:#fff}
+.bp-compose textarea.bp-in{min-height:0;max-height:none}   /* 줄 수(rows)대로 — 예전 큰 칸 크기 무시 */
+.bp-compose textarea#bpNote{min-height:84px}
+.bp-in-quote{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:1.05rem}
+.bp-send-full{display:block;width:100%;height:50px;border-radius:14px;font-size:1.02rem;margin-top:4px}
 .sq-text.sq-post{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem;line-height:1.6;text-align:left}
 
 /* v11.115: 시작 화면 문구 뒤 점 세 개 */
@@ -1536,7 +1558,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
       </svg>
       <nav class="book-toc" aria-label="목차">
         <h4>목 차</h4>
-        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="자유게시판 열기"><span class="toc-best-t">자유게시판</span><span class="toc-badge"><span class="toc-date" id="topDate"></span></span><span class="toc-sub" id="topComment"></span></div>
+        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="나만의 명언 열기"><span class="toc-best-t">나만의 명언</span><span class="toc-badge"><span class="toc-date" id="topDate"></span></span><span class="toc-sub" id="topComment"></span></div>
         <div class="toc-trio toc-duo">
           <button type="button" class="toc-tile" onclick="openLibraryModal('likes')">내 보관함</button>
           <button type="button" class="toc-tile" onclick="openSearchModal()">검색</button>
@@ -1577,15 +1599,15 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
   </div>
 </div>
 <!-- v11.114: 자유게시판 -->
-<div class="board-page" id="boardPage" role="dialog" aria-label="자유게시판">
+<div class="board-page" id="boardPage" role="dialog" aria-label="나만의 명언">
   <div class="bp-top">
     <button type="button" class="bp-back" onclick="closeBoard()" aria-label="뒤로"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="bp-title">자유게시판</div>
-    <div class="comment-sort bp-sort" id="boardSort" role="tablist" aria-label="게시글 정렬"></div>
+    <div class="bp-title">나만의 명언</div>
+    <div class="comment-sort bp-sort" id="boardSort" role="tablist" aria-label="명언 정렬"></div>
   </div>
-  <div class="bp-intro">마음에 남은 이야기, 좋아하는 글귀를 자유롭게 나눠 보세요.</div>
+  <div class="bp-intro">마음에 새긴 한 줄, 내가 만든 명언을 나눠 보세요.</div>
   <div class="bp-list" id="boardList"></div>
-  <button type="button" class="bp-write" onclick="openBoardCompose()">✏️ 글쓰기</button>
+  <button type="button" class="bp-write" onclick="openBoardCompose()">✏️ 명언 쓰기</button>
 </div>
 <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg></div>
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -3743,7 +3765,7 @@ function openComments(qid) {
   currentCommentQuote = qid;
   if (isPostKey(qid)) {   // v11.114: 자유게시판 글의 댓글
     const pp = findPost(qid.slice(2)) || { text: '', author: '' };
-    document.getElementById('commentQuote').innerHTML = `<div class="sq-text sq-post">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div><div class="sq-author">- ${escapeHTML(pp.author || '익명')} -</div>`;
+    document.getElementById('commentQuote').innerHTML = `<div class="sq-text sq-post">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div><div class="sq-author">- ${escapeHTML(pp.by || pp.author || '익명')} -</div>${pp.note ? `<div class="sq-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}`;
   } else {
   const q = getQuote(qid);
   document.getElementById('commentQuote').innerHTML = `<div class="sq-text">${escapeHTML(q.text).split('\n').map(keepTail).join('<br>')}</div><div class="sq-author">- ${escapeHTML(q.author)} -</div>`;
@@ -4223,11 +4245,11 @@ async function renderTopComment() {
   topCommentQid = null;
   if (!pick) {
     card.classList.remove('has');
-    card.innerHTML = `<span class="tc-wait">아직 없어요<br><small>오늘의 첫 이야기를 남겨 보세요!</small></span>`;
+    card.innerHTML = `<span class="tc-wait">아직 없어요<br><small>오늘의 첫 명언을 남겨 보세요!</small></span>`;
     return;
   }
   card.classList.add('has');
-  card.innerHTML = `<span class="tc-text">“${escapeHTML(pick.text.replace(/\s+/g, ' ').slice(0, 80))}”</span><span class="tc-by"><span class="tc-name">— ${escapeHTML(pick.author || '익명')}</span><span class="tc-likes"><span class="tc-heart">♥</span>${pick.likes}</span></span>`;
+  card.innerHTML = `<span class="tc-text">“${escapeHTML(pick.text.replace(/\s+/g, ' ').slice(0, 80))}”</span><span class="tc-by"><span class="tc-name">— ${escapeHTML(pick.by || pick.author || '익명')}</span><span class="tc-likes"><span class="tc-heart">♥</span>${pick.likes}</span></span>`;
 }
 (function () { const d = new Date(), el = document.getElementById('topDate'); if (el) el.textContent = `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; })();
 function goTopComment() { openBoard(); }   // v11.115: 홈 카드 → 자유게시판
@@ -4983,7 +5005,7 @@ function openTipsModal() {
       <div class="tip-item"><span class="tip-ic">💡</span><div><div class="tip-t">오늘의 한 걸음</div><div class="tip-d">명언 오른쪽 아래<br>💡 이모티콘을 누르면<br>명언에 맞는 조언을 보여줘요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">🏷️</span><div><div class="tip-t">주제</div><div class="tip-d">화면 왼쪽 위 #사랑 버튼을<br>누르면 카테고리별 명언을<br>볼 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">💬</span><div><div class="tip-t">댓글</div><div class="tip-d">공감 버튼을 누르거나<br>댓글을 두 번 누르면<br>글에 하트를 남길 수 있어요!<br>부적절한 댓글은 길게 눌러<br>신고할 수 있어요 !<br><small>(신고한 글은 검토 후 삭제 처리돼요!)</small></div></div></div>
-      <div class="tip-item"><span class="tip-ic">📋</span><div><div class="tip-t">자유게시판</div><div class="tip-d">홈 화면의 '자유게시판' 상자를 누르면<br>마음에 남은 이야기를 자유롭게 나눌 수 있어요.<br>상자에는 오늘 올라온 최근 글이 보여요!</div></div></div>
+      <div class="tip-item"><span class="tip-ic">📋</span><div><div class="tip-t">나만의 명언</div><div class="tip-d">홈 화면의 '나만의 명언' 상자를 누르면<br>내가 만든 명언과 그 이야기를 나눌 수 있어요.<br>상자에는 오늘 올라온 최근 명언이 보여요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔗</span><div><div class="tip-t">공유하기</div><div class="tip-d">왼쪽 아래 공유 버튼으로<br>친구에게 보내거나<br>사진으로 저장할 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">✏️</span><div><div class="tip-t">메모</div><div class="tip-d">왼쪽 아래 연필 아이콘을 누르면<br>글에 대한 메모나 일기를<br>적어둘 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🎨</span><div><div class="tip-t">글씨·배경 바꾸기</div><div class="tip-d">글귀 화면 오른쪽 위 <svg class="tip-inline-ic" viewBox="0 0 24 24" aria-label="네모 두 개 아이콘"><rect x="3" y="4" width="13" height="13" rx="2.5"></rect><rect x="12" y="11" width="9" height="9" rx="2"></rect></svg> 버튼을<br>누르면 배경과 글씨를<br>바꿔 볼 수 있어요!</div></div></div>
@@ -5236,7 +5258,7 @@ function adminListHTML() {
   if (!adminList.length) return '<div class="block-empty">처리할 신고가 없어요 🙂</div>';
   return adminList.map((r, i) => {
     const q = getQuote(r.quoteId);
-    const where = r.postId ? '<div class="admin-quote">📋 자유게시판 글</div>' : (typeof r.quoteId === 'string' && r.quoteId.startsWith('p_')) ? '<div class="admin-quote">📋 자유게시판 글의 댓글</div>' : '';
+    const where = r.postId ? '<div class="admin-quote">📋 나만의 명언</div>' : (typeof r.quoteId === 'string' && r.quoteId.startsWith('p_')) ? '<div class="admin-quote">📋 나만의 명언의 댓글</div>' : '';
     return `<div class="admin-row">
       <div class="admin-meta"><span class="admin-cnt">신고 ${r.count}건</span>${r.at ? `<span>${timeAgo(r.at)}</span>` : ''}${r.exists === false ? '<span class="admin-gone">이미 삭제됨</span>' : ''}</div>
       <div class="admin-text"><b>${escapeHTML(r.author || '익명')}</b> ${escapeHTML(r.text || '')}</div>
@@ -5287,7 +5309,7 @@ function actListHTML() {
   return list.map(c => {
     const q = getQuote(c.quoteId), onBoard = isPostKey(c.quoteId);
     return `<div class="act-item" onclick="goActComment('${c.quoteId}')">
-      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 자유게시판 · 내가 쓴 글' : '📋 자유게시판') : q ? escapeHTML(flat(q.text)) : '사라진 글귀'}</div>
+      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 나만의 명언 · 내가 올린 명언' : '📋 나만의 명언') : q ? escapeHTML(flat(q.text)) : '사라진 글귀'}</div>
       ${c.parent ? `<div class="act-parent"><b>${escapeHTML(c.parent.author || '익명')}</b> ${escapeHTML(c.parent.text)}</div>` : ''}
       <div class="act-text">${c.parent ? '↳ ' : ''}${escapeHTML(c.text)}</div>
       <div class="act-meta">${c.mine ? '' : `${escapeHTML(c.author || '익명')} · `}${timeAgo(c.at)} · 공감 ${c.likes || 0}</div>
@@ -5367,7 +5389,7 @@ function settingsNotiHTML() {
   return `
     <div class="settings-group">
       ${toggleRow('🔔 매일 알림 받기', isNotificationEnabled, 'toggleNotification', '정한 시간에 오늘의 한 줄이 와요')}
-      ${toggleRow('💬 댓글 알림', isCommentPushOn, 'toggleCommentPush', '내 글·댓글에 답글이나 공감이 달리면')}
+      ${toggleRow('💬 댓글 알림', isCommentPushOn, 'toggleCommentPush', '내 명언·댓글에 답글이나 공감이 달리면')}
     </div>
     <div class="settings-section-label">알림 시간 <span class="nt-count">${notiTimes.length}/${NOTI_MAX}</span></div>
     <div class="settings-group nt-group ${isNotificationEnabled ? '' : 'is-off'}">
@@ -5844,7 +5866,7 @@ function openQuoteFromOutside(id) {
 
 /* ===== v11.114: 자유게시판 =====
    글: posts/{id} (500자) · 글의 댓글은 기존 댓글 창을 그대로 쓰고 quoteId = 'p_글번호' */
-const BOARD_MAX = 500;
+const BOARD_MAX = 200, BY_MAX = 20, NOTE_MAX = 300;   // v11.124: 명언 200자 · 누가 한 말 20자 · 명언에 대한 이야기 300자
 const isPostKey = k => typeof k === 'string' && k.startsWith('p_');
 let boardPosts = [], boardSort = 'recent', boardUnsub = null, boardLoaded = false, boardErr = false, boardEditId = null, boardSending = false;
 const findPost = id => boardPosts.find(p => p.id === id);
@@ -5852,17 +5874,17 @@ const LocalBoard = {
   cb: null,
   load() { return lsGet('boardPosts', []); },
   save(a) { lsSet('boardPosts', a.slice(0, 300)); if (this.cb) this.cb(a.map(x => this.norm(x))); },
-  norm(x) { const lb = x.likedBy || []; return { id: x.id, text: x.text, author: x.author, avatar: x.avatar || '', photo: x.photo || '', authorUid: x.authorUid, at: x.at, likes: lb.length, liked: lb.includes('local-me'), mine: x.authorUid === 'local-me', hidden: false, edited: !!x.edited, reportedByMe: !!x.reported }; },
+  norm(x) { const lb = x.likedBy || []; return { id: x.id, text: x.text, by: x.by || '', note: x.note || '', author: x.author, avatar: x.avatar || '', photo: x.photo || '', authorUid: x.authorUid, at: x.at, likes: lb.length, liked: lb.includes('local-me'), mine: x.authorUid === 'local-me', hidden: false, edited: !!x.edited, reportedByMe: !!x.reported }; },
   watch(cb) { this.cb = cb; cb(this.load().map(x => this.norm(x))); return () => { this.cb = null; }; },
   async get(id) { const x = this.load().find(y => y.id === id); return x ? this.norm(x) : null; },
   async latest() { return this.load().map(x => this.norm(x)).sort((a, b) => b.at - a.at).slice(0, 10); },
   async myActivity() { const all = this.load().map(x => ({ ...this.norm(x), quoteId: 'p_' + x.id, kind: 'post' })); return { mine: all.filter(x => x.mine), liked: all.filter(x => x.liked && !x.mine) }; },
-  async add(text, author) {
+  async add(text, author, by = '', note = '') {
     const a = this.load(), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    a.unshift({ id, text, author, avatar: (authUser && authUser.avatar) || '', photo: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: 'local-me', at: Date.now(), likedBy: [] });
+    a.unshift({ id, text, by, note, author, avatar: (authUser && authUser.avatar) || '', photo: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: 'local-me', at: Date.now(), likedBy: [] });
     this.save(a); return id;
   },
-  async edit(pp, text) { const a = this.load(), x = a.find(y => y.id === pp.id); if (x) { x.text = text; x.edited = true; } this.save(a); },
+  async edit(pp, text, by = '', note = '') { const a = this.load(), x = a.find(y => y.id === pp.id); if (x) { x.text = text; x.by = by; x.note = note; x.edited = true; } this.save(a); },
   async remove(pp) { this.save(this.load().filter(y => y.id !== pp.id)); },
   async like(pp) { const a = this.load(), x = a.find(y => y.id === pp.id); if (x) { const lb = x.likedBy || []; x.likedBy = lb.includes('local-me') ? lb.filter(u => u !== 'local-me') : lb.concat('local-me'); } this.save(a); },
   async report(pp) { const a = this.load(), x = a.find(y => y.id === pp.id); if (x) x.reported = true; this.save(a); },
@@ -5872,7 +5894,7 @@ const ServerBoard = {
   get fs() { return ServerStore.fs; }, get db() { return ServerStore.db; }, get uid() { return ServerStore.uid; },
   norm(d) {
     const x = d.data(), lb = x.likedBy || [];
-    return { id: d.id, text: x.text, author: x.authorName, avatar: x.authorAvatar || '', photo: x.authorPhoto || '', authorUid: x.authorUid,
+    return { id: d.id, text: x.text, by: x.by || '', note: x.note || '', author: x.authorName, avatar: x.authorAvatar || '', photo: x.authorPhoto || '', authorUid: x.authorUid,
              at: x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : Date.now(), likes: x.likeCount || 0, liked: lb.includes(this.uid),
              mine: x.authorUid === this.uid, hidden: !!x.hidden, edited: !!x.editedAt, reportedByMe: (x.reportedBy || []).includes(this.uid) };
   },
@@ -5891,16 +5913,16 @@ const ServerBoard = {
     return { mine: m.docs.map(f), liked: l.docs.map(f).filter(x => !x.hidden && !x.mine) };
   },
   async latest() { const { collection, query, orderBy, limit, getDocs } = this.fs; const snap = await withTimeout(getDocs(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(10))), 10000, 'firestore/timeout'); return snap.docs.map(d => this.norm(d)); },
-  async add(text, author) {
+  async add(text, author, by = '', note = '') {
     const { collection, doc, serverTimestamp, writeBatch } = this.fs;
     const ref = doc(collection(this.db, 'posts')), batch = writeBatch(this.db);
-    batch.set(ref, { text, authorName: author, authorAvatar: (authUser && authUser.avatar) || '', authorPhoto: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: this.uid,
+    batch.set(ref, { text, by, note, authorName: author, authorAvatar: (authUser && authUser.avatar) || '', authorPhoto: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: this.uid,
                      createdAt: serverTimestamp(), likeCount: 0, likedBy: [], reportCount: 0, hidden: false });
     batch.set(doc(this.db, 'rate', this.uid), { last: serverTimestamp() });   // v11.122: 도배 막기
     await batch.commit();
     return ref.id;
   },
-  async edit(pp, text) { const { doc, updateDoc, serverTimestamp } = this.fs; await updateDoc(doc(this.db, 'posts', pp.id), { text, editedAt: serverTimestamp() }); },
+  async edit(pp, text, by = '', note = '') { const { doc, updateDoc, serverTimestamp } = this.fs; await updateDoc(doc(this.db, 'posts', pp.id), { text, by, note, editedAt: serverTimestamp() }); },
   async remove(pp) { const { doc, deleteDoc } = this.fs; await deleteDoc(doc(this.db, 'posts', pp.id)); },
   async like(pp) {
     const { doc, runTransaction, arrayUnion, arrayRemove, increment } = this.fs;
@@ -5969,24 +5991,26 @@ function renderBoard() {
   const box = document.getElementById('boardList');
   if (boardErr && !boardPosts.length) { box.innerHTML = `<div class="bp-empty">글을 불러오지 못했어요.<br><small>인터넷 연결을 확인해 주세요.</small></div>`; return; }
   if (!boardLoaded) { box.innerHTML = `<div class="bp-empty">불러오는 중…</div>`; return; }
-  if (!boardPosts.length) { box.innerHTML = `<div class="bp-empty">📝<br>아직 글이 없어요.<br><b>첫 번째 이야기를 남겨 보세요!</b></div>`; return; }
+  if (!boardPosts.length) { box.innerHTML = `<div class="bp-empty">📝<br>아직 명언이 없어요.<br><b>첫 번째 명언을 남겨 보세요!</b></div>`; return; }
   const list = boardPosts.slice().sort(boardSort === 'likes' ? (a, b) => b.likes - a.likes || b.at - a.at : (a, b) => b.at - a.at);
   const st = box.scrollTop;
   box.innerHTML = list.map(pp => {
     const av = pp.photo && isSafePhoto(pp.photo) ? `<img class="avatar-img" src="${pp.photo}" alt="">` : pp.avatar && pp.avatar !== 'photo' ? escapeHTML(pp.avatar) : escapeHTML((pp.author || '?').slice(0, 1));
     return `<div class="bp-card ${pp.mine ? 'is-mine' : ''}" id="bp-${pp.id}" data-pid="${pp.id}">
-      <div class="bp-head"><div class="comment-avatar">${av}</div><span class="bp-name">${escapeHTML(pp.author || '익명')}</span>${pp.mine ? '<span class="mine-tag">내 글</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
+      <div class="bp-head"><div class="comment-avatar">${av}</div><span class="bp-name">${escapeHTML(pp.author || '익명')}</span>${pp.mine ? '<span class="mine-tag">내 명언</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
         <span class="bp-time">${timeAgo(pp.at)}${pp.edited ? '<span class="bp-edited">(수정됨)</span>' : ''}</span>
-        ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 글 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
-      <div class="bp-text" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
+        ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 명언 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
+      <div class="bp-text bp-quote-text" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
+      ${pp.by ? `<div class="bp-by">— ${escapeHTML(pp.by)} —</div>` : ''}
+      ${pp.note ? `<div class="bp-note" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
-  }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '글 더 보기' : '이전 글 더 보기'}</button>` : '');
+  }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '명언 더 보기' : '이전 명언 더 보기'}</button>` : '');
   box.scrollTop = st;
 }
 async function openPostComments(id) {
   let pp = findPost(id);
-  if (!pp) { try { pp = await getBoard().get(id); } catch (e) {} if (!pp) { showToast('삭제된 글이에요.'); return; } boardPosts = boardPosts.filter(x => x.id !== id).concat(pp); }
+  if (!pp) { try { pp = await getBoard().get(id); } catch (e) {} if (!pp) { showToast('삭제된 명언이에요.'); return; } boardPosts = boardPosts.filter(x => x.id !== id).concat(pp); }
   openComments('p_' + id);
 }
 async function likePost(id) {
@@ -6001,16 +6025,28 @@ function openBoardCompose(editId) {
   triggerHaptic(); closeBoardCompose();
   const pp = editId ? findPost(editId) : null; if (editId && (!pp || !pp.mine)) return;
   boardEditId = pp ? pp.id : null;
+  /* v11.124: 아래에서 올라오는 작은 슬라이드 창 — 명언 · 누가 한 말 · 명언에 대한 이야기 */
   document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="bp-compose" id="bpCompose" onclick="if(event.target===this)closeBoardCompose()">
-    <div class="bp-compose-box" role="dialog" aria-label="${pp ? '글 수정' : '새 글 쓰기'}">
-      <div class="bp-compose-head"><b>${pp ? '글 수정하기' : '새 글 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
-      <textarea id="bpText" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은 이야기나 좋아하는 글귀를 나눠 보세요" oninput="onBoardInput()"></textarea>
-      <div class="bp-compose-foot"><span class="bp-count" id="bpCount">0/${BOARD_MAX}</span><button type="button" class="bp-send" id="bpSend" onclick="submitPost()" disabled>${pp ? '수정' : '등록'}</button></div>
+    <div class="bp-sheet" role="dialog" aria-label="${pp ? '명언 고치기' : '나만의 명언 쓰기'}">
+      <div class="bp-grab" aria-hidden="true"></div>
+      <div class="bp-compose-head"><b>${pp ? '명언 고치기' : '나만의 명언 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
+      <label class="bp-field"><span class="bp-label">명언<small id="bpCount">0/${BOARD_MAX}</small></span>
+        <textarea id="bpText" class="bp-in bp-in-quote" rows="3" maxlength="${BOARD_MAX}" placeholder="마음에 새긴 한 줄을 적어 주세요" oninput="onBoardInput()"></textarea></label>
+      <label class="bp-field"><span class="bp-label">누가 한 말인가요?<small>선택</small></span>
+        <input id="bpBy" class="bp-in" maxlength="${BY_MAX}" placeholder="예: 나, 어머니, 법정 스님" oninput="onBoardInput()"></label>
+      <label class="bp-field"><span class="bp-label">명언에 대한 이야기<small>선택</small></span>
+        <textarea id="bpNote" class="bp-in" rows="3" maxlength="${NOTE_MAX}" placeholder="이 말이 왜 마음에 남았는지 적어 보세요" oninput="onBoardInput()"></textarea></label>
+      <button type="button" class="bp-send bp-send-full" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '등록하기'}</button>
     </div></div>`);
-  const t = document.getElementById('bpText'); if (pp) t.value = pp.text; onBoardInput();
+  const t = document.getElementById('bpText');
+  if (pp) { t.value = pp.text; document.getElementById('bpBy').value = pp.by || ''; document.getElementById('bpNote').value = pp.note || ''; }
+  onBoardInput();
   setTimeout(() => { t.focus(); const n = t.value.length; try { t.setSelectionRange(n, n); } catch (e) {} }, 120);
 }
-function closeBoardCompose() { const c = document.getElementById('bpCompose'); if (c) c.remove(); boardEditId = null; }
+function closeBoardCompose() {
+  const c = document.getElementById('bpCompose'); boardEditId = null; if (!c) return;
+  c.id = ''; c.classList.add('closing'); setTimeout(() => c.remove(), 220);   // v11.124: 아래로 내려가며 닫힘
+}
 function onBoardInput() {
   const t = document.getElementById('bpText'); if (!t) return;
   document.getElementById('bpCount').innerText = `${t.value.length}/${BOARD_MAX}`;
@@ -6019,14 +6055,17 @@ function onBoardInput() {
 async function submitPost() {
   const t = document.getElementById('bpText'); if (!t || boardSending) return;
   const text = t.value.trim().slice(0, BOARD_MAX); if (!text) return;
-  if (hasBadWord(text)) { showToast(BAD_MSG); return; }
-  if (/(https?:\/\/|www\.|\.com|\.kr|010[-\s]?\d{3,4})/i.test(text)) { showToast('링크나 연락처는 남길 수 없어요.'); return; }
+  const by = (document.getElementById('bpBy').value || '').trim().replace(/\s+/g, ' ').slice(0, BY_MAX);
+  const note = (document.getElementById('bpNote').value || '').trim().slice(0, NOTE_MAX);
+  const all = [text, by, note].join('\n');
+  if (hasBadWord(all)) { showToast(BAD_MSG); return; }
+  if (/(https?:\/\/|www\.|\.com|\.kr|010[-\s]?\d{3,4})/i.test(all)) { showToast('링크나 연락처는 남길 수 없어요.'); return; }
   const B = getBoard();
   if (boardEditId) {
     const pp = findPost(boardEditId); if (!pp) { closeBoardCompose(); return; }
-    if (pp.text === text) { closeBoardCompose(); return; }
+    if (pp.text === text && (pp.by || '') === by && (pp.note || '') === note) { closeBoardCompose(); return; }
     boardSending = true; onBoardInput();
-    try { await B.edit(pp, text); pp.text = text; pp.edited = true; closeBoardCompose(); renderBoard(); showToast('글을 수정했어요 ✏️'); }
+    try { await B.edit(pp, text, by, note); pp.text = text; pp.by = by; pp.note = note; pp.edited = true; closeBoardCompose(); renderBoard(); showToast('명언을 고쳤어요 ✏️'); }
     catch (e) { showToast('수정하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
     boardSending = false; onBoardInput(); return;
   }
@@ -6036,10 +6075,10 @@ async function submitPost() {
   if (!nick) { nick = await askNickname(); if (!nick) return; if (authUser) { try { await Auth.saveProfile(nick, authUser.avatar || '🌿', authUser.photo || '', authUser.photoThumb || ''); } catch (e) {} } }
   boardSending = true; onBoardInput();
   try {
-    await B.add(text, nick);
+    await B.add(text, nick, by, note);
     notePost(); triggerHaptic(); closeBoardCompose();
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
-    showToast('글이 등록되었어요 📝');
+    showToast('명언이 등록되었어요 📝');
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
   } catch (e) { showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();
@@ -6050,13 +6089,13 @@ function boardMenu(html) {
 }
 function openMyPostMenu(id) {
   const pp = findPost(id); if (!pp || !pp.mine) return;
-  boardMenu(`<p><b>내 글</b></p>
+  boardMenu(`<p><b>내 명언</b></p>
     <button type="button" class="cmenu-btn" onclick="closeMemoConfirm(); openBoardCompose('${id}')">✏️ 수정하기</button>
     <button type="button" class="cmenu-btn" onclick="askDeletePost('${id}')">🗑️ 삭제하기</button>
     <button type="button" class="cmenu-btn cmenu-cancel" onclick="closeMemoConfirm()">취소</button>`);
 }
 function askDeletePost(id) {
-  boardMenu(`<p>글을 삭제할까요?<br><small style="color:#64748b">달린 댓글도 더 이상 볼 수 없어요.</small></p>
+  boardMenu(`<p>명언을 삭제할까요?<br><small style="color:#64748b">달린 댓글도 더 이상 볼 수 없어요.</small></p>
     <div class="memo-confirm-btns"><button type="button" class="mc-no" onclick="closeMemoConfirm()">아니오</button><button type="button" class="mc-yes" onclick="deletePost('${id}')">예</button></div>`);
 }
 async function deletePost(id, asAdmin) {
