@@ -1400,6 +1400,8 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 #homeHeader .toc-best .toc-sub.has{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden!important}
 #homeHeader .toc-best .toc-sub.has .tc-text{overflow-wrap:anywhere;word-break:keep-all;max-width:100%}
 .comment-text,.bp-text,.bp-note,.pv-quote,.pv-note,.sq-text,.sq-note{overflow-wrap:anywhere}
+/* v11.128: 상자 위 작은 글씨 '오늘의 BEST 명언' */
+#homeHeader .toc-best .tc-best-label{display:block;width:100%;font-size:.76rem;font-weight:700;color:#7a8a80;letter-spacing:.02em;margin:8px 0 -2px}
 /* v11.127: 홈 '우리들의 한마디'(구 마음 한 줄) 상자 — 왼쪽 줄 없이 일반 칸으로 (시간대별 홈 모양에서도) */
 #homeHeader .toc-best .toc-sub.has,#homeHeader[class] .toc-best .toc-sub.has{border-left:none!important;border:1px solid rgba(29,42,34,.08)!important;border-radius:12px!important}
 /* v11.126: 슬라이드 보기에서 연 댓글 창 — 아래 절반, 명언 상자 없음, 뒤를 어둡게 가리지 않음 */
@@ -1596,7 +1598,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
       </svg>
       <nav class="book-toc" aria-label="목차">
         <h4>목 차</h4>
-        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="우리들의 한마디 열기"><span class="toc-best-t">우리들의 한마디</span><span class="toc-sub" id="topComment"></span></div>
+        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="우리들의 한마디 열기"><span class="toc-best-t">우리들의 한마디</span><span class="tc-best-label" id="topBestLabel">오늘의 BEST 명언</span><span class="toc-sub" id="topComment"></span></div>
         <div class="toc-trio toc-duo">
           <button type="button" class="toc-tile" onclick="openLibraryModal('likes')">내 보관함</button>
           <button type="button" class="toc-tile" onclick="openSearchModal()">검색</button>
@@ -4283,7 +4285,8 @@ async function renderTopComment() {
   { const d = new Date(), el = document.getElementById('topDate'); if (el) el.textContent = `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; }
   const card = document.getElementById('topComment'); if (!card) return;
   let pick = null;
-  try { pick = (await getBoard().latest()).filter(isVisible).filter(x => !lsGet('reportedIds', []).includes('post_' + x.id)).find(x => x.at >= todayStart()) || null; } catch (e) {}
+  /* v11.128: '오늘의 BEST 명언' — 오늘 올라온 글 중 공감이 가장 많은 글 (같으면 최근 글) */
+  try { pick = (await getBoard().latest(20)).filter(isVisible).filter(x => !lsGet('reportedIds', []).includes('post_' + x.id)).filter(x => x.at >= todayStart()).sort((a, b) => b.likes - a.likes || b.at - a.at)[0] || null; } catch (e) {}
   topCommentQid = null;
   if (!pick) {
     card.classList.remove('has');
@@ -5919,7 +5922,7 @@ const LocalBoard = {
   norm(x) { const lb = x.likedBy || []; return { id: x.id, text: x.text, by: x.by || '', note: x.note || '', author: x.author, avatar: x.avatar || '', photo: x.photo || '', authorUid: x.authorUid, at: x.at, likes: lb.length, liked: lb.includes('local-me'), mine: x.authorUid === 'local-me', hidden: false, edited: !!x.edited, reportedByMe: !!x.reported }; },
   watch(cb) { this.cb = cb; cb(this.load().map(x => this.norm(x))); return () => { this.cb = null; }; },
   async get(id) { const x = this.load().find(y => y.id === id); return x ? this.norm(x) : null; },
-  async latest() { return this.load().map(x => this.norm(x)).sort((a, b) => b.at - a.at).slice(0, 10); },
+  async latest(n = 10) { return this.load().map(x => this.norm(x)).sort((a, b) => b.at - a.at).slice(0, n); },
   async myActivity() { const all = this.load().map(x => ({ ...this.norm(x), quoteId: 'p_' + x.id, kind: 'post' })); return { mine: all.filter(x => x.mine), liked: all.filter(x => x.liked && !x.mine) }; },
   async add(text, author, by = '', note = '') {
     const a = this.load(), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -5954,7 +5957,7 @@ const ServerBoard = {
     const f = d => ({ ...this.norm(d), quoteId: 'p_' + d.id, kind: 'post' });
     return { mine: m.docs.map(f), liked: l.docs.map(f).filter(x => !x.hidden && !x.mine) };
   },
-  async latest() { const { collection, query, orderBy, limit, getDocs } = this.fs; const snap = await withTimeout(getDocs(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(10))), 10000, 'firestore/timeout'); return snap.docs.map(d => this.norm(d)); },
+  async latest(n = 10) { const { collection, query, orderBy, limit, getDocs } = this.fs; const snap = await withTimeout(getDocs(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(n))), 10000, 'firestore/timeout'); return snap.docs.map(d => this.norm(d)); },
   async add(text, author, by = '', note = '') {
     const { collection, doc, serverTimestamp, writeBatch } = this.fs;
     const ref = doc(collection(this.db, 'posts')), batch = writeBatch(this.db);
