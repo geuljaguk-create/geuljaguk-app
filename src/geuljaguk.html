@@ -1402,7 +1402,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .comment-text,.bp-text,.bp-note,.pv-quote,.pv-note,.sq-text,.sq-note{overflow-wrap:anywhere}
 /* v11.128: 상자 바로 위 오른쪽 작은 글씨 '함께 공감한 한마디' (오늘 공감이 가장 많은 글) */
 #homeHeader .toc-best .tc-best-label{display:block;width:100%;text-align:right;margin:8px 2px -5px 0;font-size:.78rem;font-weight:700;color:#7a8a80;letter-spacing:.01em;white-space:nowrap}
-/* v11.127: 홈 '우리들의 한마디'(구 마음 한 줄) 상자 — 왼쪽 줄 없이 일반 칸으로 (시간대별 홈 모양에서도) */
+/* v11.127: 홈 '오늘의 내 명언'(구 우리들의 한마디·마음 한 줄) 상자 — 왼쪽 줄 없이 일반 칸으로 (시간대별 홈 모양에서도) */
 #homeHeader .toc-best .toc-sub.has,#homeHeader[class] .toc-best .toc-sub.has{border-left:none!important;border:1px solid rgba(29,42,34,.08)!important;border-radius:12px!important}
 /* v11.126: 슬라이드 보기에서 연 댓글 창 — 아래 절반, 명언 상자 없음, 뒤를 어둡게 가리지 않음 */
 .comment-sheet.half{height:52vh;height:52dvh}
@@ -1601,7 +1601,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
       </svg>
       <nav class="book-toc" aria-label="목차">
         <h4>목 차</h4>
-        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="우리들의 한마디 열기"><span class="toc-best-t">우리들의 한마디</span><span class="tc-best-label" id="topBestLabel">함께 공감한 한마디</span><span class="toc-sub" id="topComment"></span></div>
+        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="오늘의 내 명언 열기"><span class="toc-best-t">오늘의 내 명언</span><span class="tc-best-label" id="topBestLabel">함께 공감한 명언</span><span class="toc-sub" id="topComment"></span></div>
         <div class="toc-trio toc-duo">
           <button type="button" class="toc-tile" onclick="openLibraryModal('likes')">내 보관함</button>
           <button type="button" class="toc-tile" onclick="openSearchModal()">검색</button>
@@ -1642,14 +1642,14 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
   </div>
 </div>
 <!-- v11.114: 자유게시판 -->
-<div class="board-page" id="boardPage" role="dialog" aria-label="우리들의 한마디">
+<div class="board-page" id="boardPage" role="dialog" aria-label="오늘의 내 명언">
   <div class="bp-top">
     <button type="button" class="bp-back" onclick="closeBoard()" aria-label="뒤로"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="bp-title">우리들의 한마디</div>
+    <div class="bp-title">오늘의 내 명언</div>
     <div class="comment-sort bp-sort" id="boardSort" role="tablist" aria-label="명언 정렬"></div>
   </div>
   <div class="bp-list" id="boardList"></div>
-  <button type="button" class="bp-write" onclick="openBoardCompose()">✏️ 한마디 쓰기</button>
+  <button type="button" class="bp-write" onclick="openBoardCompose()">✏️ 명언 쓰기</button>
 </div>
 <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg></div>
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -4292,7 +4292,7 @@ async function renderTopComment() {
   topCommentQid = null;
   if (!pick) {
     card.classList.remove('has');
-    card.innerHTML = `<span class="tc-wait">아직 없어요<br><small>오늘의 첫 한마디를 남겨 보세요!</small></span>`;
+    card.innerHTML = `<span class="tc-wait">아직 없어요<br><small>오늘의 첫 명언을 남겨 보세요!</small></span>`;
     return;
   }
   card.classList.add('has');
@@ -5055,7 +5055,7 @@ function openTipsModal() {
       <div class="tip-item"><span class="tip-ic">💡</span><div><div class="tip-t">오늘의 한 걸음</div><div class="tip-d">명언 오른쪽 아래<br>💡 이모티콘을 누르면<br>명언에 맞는 조언을 보여줘요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">🏷️</span><div><div class="tip-t">주제</div><div class="tip-d">화면 왼쪽 위 #사랑 버튼을<br>누르면 카테고리별 명언을<br>볼 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">💬</span><div><div class="tip-t">댓글</div><div class="tip-d">공감 버튼을 누르거나<br>댓글을 두 번 누르면<br>글에 하트를 남길 수 있어요!<br>부적절한 댓글은 길게 눌러<br>신고할 수 있어요 !<br><small>(신고한 글은 검토 후 삭제 처리돼요!)</small></div></div></div>
-      <div class="tip-item"><span class="tip-ic">📋</span><div><div class="tip-t">우리들의 한마디</div><div class="tip-d">홈 화면의 '우리들의 한마디' 상자를 누르면<br>오늘 마음에 남은 한마디와 그 이야기를 나눌 수 있어요.</div></div></div>
+      <div class="tip-item"><span class="tip-ic">📋</span><div><div class="tip-t">오늘의 내 명언</div><div class="tip-d">홈 화면의 '오늘의 내 명언' 상자를 누르면<br>오늘 마음에 남은 나만의 명언과 그 이야기를 나눌 수 있어요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔗</span><div><div class="tip-t">공유하기</div><div class="tip-d">왼쪽 아래 공유 버튼으로<br>친구에게 보내거나<br>사진으로 저장할 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">✏️</span><div><div class="tip-t">메모</div><div class="tip-d">왼쪽 아래 연필 아이콘을 누르면<br>글에 대한 메모나 일기를<br>적어둘 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🎨</span><div><div class="tip-t">글씨·배경 바꾸기</div><div class="tip-d">명언 화면 오른쪽 위 <svg class="tip-inline-ic" viewBox="0 0 24 24" aria-label="네모 두 개 아이콘"><rect x="3" y="4" width="13" height="13" rx="2.5"></rect><rect x="12" y="11" width="9" height="9" rx="2"></rect></svg> 버튼을<br>누르면 배경과 글씨를<br>바꿔 볼 수 있어요!</div></div></div>
@@ -5303,7 +5303,7 @@ function adminListHTML() {
   if (!adminList.length) return '<div class="block-empty">처리할 신고가 없어요 🙂</div>';
   return adminList.map((r, i) => {
     const q = getQuote(r.quoteId);
-    const where = r.postId ? '<div class="admin-quote">📋 우리들의 한마디</div>' : (typeof r.quoteId === 'string' && r.quoteId.startsWith('p_')) ? '<div class="admin-quote">📋 우리들의 한마디의 댓글</div>' : '';
+    const where = r.postId ? '<div class="admin-quote">📋 오늘의 내 명언</div>' : (typeof r.quoteId === 'string' && r.quoteId.startsWith('p_')) ? '<div class="admin-quote">📋 오늘의 내 명언의 댓글</div>' : '';
     return `<div class="admin-row">
       <div class="admin-meta"><span class="admin-cnt">신고 ${r.count}건</span>${r.at ? `<span>${timeAgo(r.at)}</span>` : ''}${r.exists === false ? '<span class="admin-gone">이미 삭제됨</span>' : ''}</div>
       <div class="admin-text"><b>${escapeHTML(r.author || '익명')}</b> ${escapeHTML(r.text || '')}</div>
@@ -5354,7 +5354,7 @@ function actListHTML() {
   return list.map(c => {
     const q = getQuote(c.quoteId), onBoard = isPostKey(c.quoteId);
     return `<div class="act-item" onclick="goActComment('${c.quoteId}')">
-      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 우리들의 한마디 · 내가 쓴 한마디' : '📋 우리들의 한마디') : q ? escapeHTML(flat(q.text)) : '사라진 명언'}</div>
+      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 오늘의 내 명언 · 내가 쓴 명언' : '📋 오늘의 내 명언') : q ? escapeHTML(flat(q.text)) : '사라진 명언'}</div>
       ${c.parent ? `<div class="act-parent"><b>${escapeHTML(c.parent.author || '익명')}</b> ${escapeHTML(c.parent.text)}</div>` : ''}
       <div class="act-text">${c.parent ? '↳ ' : ''}${escapeHTML(c.text)}</div>
       <div class="act-meta">${c.mine ? '' : `${escapeHTML(c.author || '익명')} · `}${timeAgo(c.at)} · 공감 ${c.likes || 0}</div>
@@ -6037,21 +6037,21 @@ function renderBoard() {
   const box = document.getElementById('boardList');
   if (boardErr && !boardPosts.length) { box.innerHTML = `<div class="bp-empty">글을 불러오지 못했어요.<br><small>인터넷 연결을 확인해 주세요.</small></div>`; return; }
   if (!boardLoaded) { box.innerHTML = `<div class="bp-empty">불러오는 중…</div>`; return; }
-  if (!boardPosts.length) { box.innerHTML = `<div class="bp-empty">📝<br>아직 한마디가 없어요.<br><b>첫 번째 한마디를 남겨 보세요!</b></div>`; return; }
+  if (!boardPosts.length) { box.innerHTML = `<div class="bp-empty">📝<br>아직 올라온 명언이 없어요.<br><b>오늘의 첫 명언을 남겨 보세요!</b></div>`; return; }
   const list = boardPosts.slice().sort(boardSort === 'likes' ? (a, b) => b.likes - a.likes || b.at - a.at : (a, b) => b.at - a.at);
   const st = box.scrollTop;
   box.innerHTML = list.map(pp => {
     const av = pp.photo && isSafePhoto(pp.photo) ? `<img class="avatar-img" src="${pp.photo}" alt="">` : pp.avatar && pp.avatar !== 'photo' ? escapeHTML(pp.avatar) : escapeHTML((pp.author || '?').slice(0, 1));
     return `<div class="bp-card ${pp.mine ? 'is-mine' : ''}" id="bp-${pp.id}" data-pid="${pp.id}" onclick="if(!event.target.closest('button'))openPostViewer('${pp.id}')">
-      <div class="bp-head"><div class="comment-avatar">${av}</div>${pp.mine ? '<span class="mine-tag">내 한마디</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
+      <div class="bp-head"><div class="comment-avatar">${av}</div>${pp.mine ? '<span class="mine-tag">내 명언</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
         <span class="bp-time">${timeAgo(pp.at)}${pp.edited ? '<span class="bp-edited">(수정됨)</span>' : ''}</span>
-        ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 한마디 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
+        ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 명언 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
       <div class="bp-text bp-quote-text">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
       <div class="bp-by">— ${escapeHTML(pp.author || '익명')} —</div>
       ${pp.note ? '<div class="bp-note-hint">📖 담긴 이야기가 있어요 · 눌러서 보기</div>' : ''}   <!-- v11.128: 이야기는 목록에서 숨기고, 눌러서 크게 볼 때만 -->
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
-  }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '한마디 더 보기' : '이전 한마디 더 보기'}</button>` : '');
+  }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '명언 더 보기' : '이전 명언 더 보기'}</button>` : '');
   box.scrollTop = st;
 }
 /* v11.125: 명언을 누르면 한 장씩 넘겨 보는 슬라이드 화면 (위로 넘기면 다음 명언) */
@@ -6060,11 +6060,11 @@ function openPostViewer(id) {
   triggerHaptic(); closePostViewer(true);
   pvList = boardPosts.slice().sort(boardSort === 'likes' ? (a, b) => b.likes - a.likes || b.at - a.at : (a, b) => b.at - a.at);
   const i = Math.max(0, pvList.findIndex(x => x.id === id));
-  document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="pv" id="postViewer" role="dialog" aria-label="우리들의 한마디 크게 보기">
+  document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="pv" id="postViewer" role="dialog" aria-label="오늘의 내 명언 크게 보기">
     <div class="pv-top"><button type="button" class="bp-back" onclick="closePostViewer()" aria-label="닫기"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
       <span class="pv-count" id="pvCount"></span></div>
-    <div class="pv-track" id="pvTrack">${pvList.map(pvSlideHTML).join('')}${boardHasMore ? `<section class="pv-slide pv-end"><button type="button" class="load-more" onclick="closePostViewer(); loadMorePosts()">이전 한마디 더 보기</button></section>` : ''}</div>
-    <div class="pv-hint" id="pvHint">위로 넘기면 다음 한마디</div>
+    <div class="pv-track" id="pvTrack">${pvList.map(pvSlideHTML).join('')}${boardHasMore ? `<section class="pv-slide pv-end"><button type="button" class="load-more" onclick="closePostViewer(); loadMorePosts()">이전 명언 더 보기</button></section>` : ''}</div>
+    <div class="pv-hint" id="pvHint">위로 넘기면 다음 명언</div>
   </div>`);
   const tr = document.getElementById('pvTrack');
   tr.addEventListener('scroll', pvOnScroll, { passive: true });
@@ -6097,7 +6097,7 @@ function closePostViewer(now) {
 }
 async function openPostComments(id) {
   let pp = findPost(id);
-  if (!pp) { try { pp = await getBoard().get(id); } catch (e) {} if (!pp) { showToast('삭제된 한마디예요.'); return; } boardPosts = boardPosts.filter(x => x.id !== id).concat(pp); }
+  if (!pp) { try { pp = await getBoard().get(id); } catch (e) {} if (!pp) { showToast('삭제된 명언이에요.'); return; } boardPosts = boardPosts.filter(x => x.id !== id).concat(pp); }
   /* v11.126: 슬라이드 보기에서 댓글을 열면 명언은 위에 그대로 보이고, 댓글 창은 아래 절반에서 열림 (위쪽 명언 상자 없음) */
   const pv = document.getElementById('postViewer');
   if (pv) {
@@ -6118,7 +6118,7 @@ async function likePost(id) {
 }
 /* v11.125: 나만의 명언은 하루에 한 번만 (한국 시간 기준 날짜). 서버도 postDay/{내 ID}로 한 번 더 확인 */
 const kstDay = ms => new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
-const DAILY_MSG = '우리들의 한마디는 하루에 한 번 쓸 수 있어요.';
+const DAILY_MSG = '오늘의 내 명언은 하루에 한 번 쓸 수 있어요.';
 async function postedToday() {
   const today = kstDay(Date.now());
   if (lsGet('postDay', '') === today) return true;
@@ -6139,12 +6139,12 @@ async function openBoardCompose(editId) {
   boardEditId = pp ? pp.id : null;
   /* v11.124: 아래에서 올라오는 작은 슬라이드 창 — 명언 · 누가 한 말 · 명언에 대한 이야기 */
   document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="bp-compose" id="bpCompose" onclick="if(event.target===this)closeBoardCompose()">
-    <div class="bp-sheet" role="dialog" aria-label="${pp ? '한마디 고치기' : '한마디 쓰기'}">
+    <div class="bp-sheet" role="dialog" aria-label="${pp ? '명언 고치기' : '오늘의 내 명언 쓰기'}">
       <div class="bp-grab" aria-hidden="true"></div>
-      <div class="bp-compose-head"><b>${pp ? '한마디 고치기' : '한마디 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
-      <label class="bp-field"><span class="bp-label">한마디<small id="bpCount">0/${BOARD_MAX}</small></span>
-        <textarea id="bpText" class="bp-in bp-in-quote" rows="2" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은 한마디를 적어 주세요" oninput="onBoardInput()"></textarea></label>
-      <label class="bp-field"><span class="bp-label">이 한마디에 담긴 이야기<small>선택</small></span>
+      <div class="bp-compose-head"><b>${pp ? '명언 고치기' : '오늘의 내 명언 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
+      <label class="bp-field"><span class="bp-label">명언<small id="bpCount">0/${BOARD_MAX}</small></span>
+        <textarea id="bpText" class="bp-in bp-in-quote" rows="2" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은 나만의 명언을 적어 주세요" oninput="onBoardInput()"></textarea></label>
+      <label class="bp-field"><span class="bp-label">이 명언에 담긴 이야기<small>선택</small></span>
         <textarea id="bpNote" class="bp-in" rows="3" maxlength="${NOTE_MAX}" placeholder="이 말이 왜 마음에 남았는지 적어 보세요" oninput="onBoardInput()"></textarea></label>
       <div class="bp-warn" id="bpWarn" role="alert"></div>
       <button type="button" class="bp-send bp-send-full" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '등록하기'}</button>
@@ -6192,7 +6192,7 @@ async function submitPost() {
     const pp = findPost(boardEditId); if (!pp) { closeBoardCompose(); return; }
     if (pp.text === text && (pp.note || '') === note) { closeBoardCompose(); return; }
     boardSending = true; onBoardInput();
-    try { await B.edit(pp, text, by, note); pp.text = text; pp.by = by; pp.note = note; pp.edited = true; closeBoardCompose(); renderBoard(); showToast('한마디를 고쳤어요 ✏️'); }
+    try { await B.edit(pp, text, by, note); pp.text = text; pp.by = by; pp.note = note; pp.edited = true; closeBoardCompose(); renderBoard(); showToast('명언을 고쳤어요 ✏️'); }
     catch (e) { showToast('수정하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
     boardSending = false; onBoardInput(); return;
   }
@@ -6207,7 +6207,7 @@ async function submitPost() {
     lsSet('postDay', kstDay(Date.now()));   // v11.125
     notePost(); triggerHaptic(); closeBoardCompose();
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
-    showToast('한마디가 등록되었어요 📝');
+    showToast('명언이 등록되었어요 📝');
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
   } catch (e) { showToast(/permission/i.test(errCode(e)) ? (await postedToday() ? DAILY_MSG : '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.') : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();
@@ -6218,13 +6218,13 @@ function boardMenu(html) {
 }
 function openMyPostMenu(id) {
   const pp = findPost(id); if (!pp || !pp.mine) return;
-  boardMenu(`<p><b>내 한마디</b></p>
+  boardMenu(`<p><b>내 명언</b></p>
     <button type="button" class="cmenu-btn" onclick="closeMemoConfirm(); openBoardCompose('${id}')">✏️ 수정하기</button>
     <button type="button" class="cmenu-btn" onclick="askDeletePost('${id}')">🗑️ 삭제하기</button>
     <button type="button" class="cmenu-btn cmenu-cancel" onclick="closeMemoConfirm()">취소</button>`);
 }
 function askDeletePost(id) {
-  boardMenu(`<p>이 한마디를 삭제할까요?<br><small style="color:#64748b">달린 댓글도 더 이상 볼 수 없어요.</small></p>
+  boardMenu(`<p>이 명언을 삭제할까요?<br><small style="color:#64748b">달린 댓글도 더 이상 볼 수 없어요.</small></p>
     <div class="memo-confirm-btns"><button type="button" class="mc-no" onclick="closeMemoConfirm()">아니오</button><button type="button" class="mc-yes" onclick="deletePost('${id}')">예</button></div>`);
 }
 async function deletePost(id, asAdmin) {
