@@ -11,6 +11,8 @@ service cloud.firestore {
     function realUser() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
     // v11.122: 글을 쓸 때 rate/{내 ID}의 시각도 같이 바꿔야 함 → 아래 rate 규칙이 10초 간격을 확인 (도배·요금 폭탄 막기)
     function paced() { return getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.last == request.time; }
+    // v11.125: 나만의 명언은 하루(한국 시간) 한 번 — 쓸 때 postDay/{내 ID}의 시각도 같이 바꿔야 하고, 아래 규칙이 날짜가 바뀌었는지 확인
+    function daily() { return getAfter(/databases/$(database)/documents/postDay/$(request.auth.uid)).data.last == request.time; }
 
     // ---------- 댓글 ----------
     match /comments/{commentId} {
@@ -81,6 +83,7 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if true;
       allow create: if realUser() && paced()
+        && daily()
         && request.resource.data.keys().hasOnly(['text','by','note','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden'])
         && postExtrasOk(request.resource.data)
         && request.resource.data.authorUid == request.auth.uid
@@ -182,6 +185,17 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time
         && request.time > resource.data.last + duration.value(10, 's');
       allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---------- v11.125: 나만의 명언 하루 한 번 (문서 이름 = 내 ID, last = 마지막으로 올린 시각) ----------
+    match /postDay/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, delete: if false;
+      allow create: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time;
+      allow update: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time
+        && (request.time + duration.value(9, 'h')).date() != (resource.data.last + duration.value(9, 'h')).date();
     }
 
     // ---------- 명언별 댓글 수 ----------

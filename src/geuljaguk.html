@@ -1396,6 +1396,25 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-send{border:none;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:700;font-size:.95rem;border-radius:999px;padding:10px 22px;cursor:pointer}
 .bp-send:disabled{opacity:.45}
 .board-page .memo-confirm{position:fixed;inset:0;border-radius:0;z-index:256}
+/* v11.125: 나만의 명언 슬라이드 보기 (한 장씩 위로 넘김) */
+.bp-card{cursor:pointer}
+.pv{position:fixed;inset:0;z-index:258;background:#f6f4ee;display:flex;flex-direction:column;animation:pvIn .28s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0px)}
+.pv.closing{animation:pvOut .22s ease forwards}
+@keyframes pvIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes pvOut{to{opacity:0;transform:translateY(24px)}}
+.pv-top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px}
+.pv-count{font-size:.86rem;font-weight:700;color:#64748b;padding-right:8px}
+.pv-track{flex:1;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pv-slide{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:12px 20px calc(24px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+.pv-card{width:100%;max-width:520px;background:#fff;border-radius:24px;padding:30px 22px 18px;box-shadow:0 10px 30px rgba(29,42,34,.1);text-align:center;max-height:100%;overflow-y:auto;box-sizing:border-box}
+.pv-quote{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:1.32rem;line-height:1.8;color:#1d2a22;word-break:keep-all;overflow-wrap:anywhere}
+.pv-by{font-family:'Nanum Myeongjo',serif;font-size:.98rem;color:#4f5e55;margin:14px 0 4px}
+.pv-note{margin:16px 0 4px;padding:14px;background:#f6f4ee;border-radius:14px;font-size:.95rem;line-height:1.7;color:#475569;text-align:left;word-break:keep-all;overflow-wrap:anywhere}
+.pv-meta{font-size:.78rem;color:#94a3b8;margin-top:12px}
+.pv-actions{justify-content:center;margin-top:14px}
+.pv-end{flex-direction:column}
+.pv-hint{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:.8rem;color:#64748b;background:rgba(255,255,255,.9);padding:6px 14px;border-radius:999px;pointer-events:none;transition:opacity .4s}
+.pv-hint.gone{opacity:0}
 /* v11.124: 나만의 명언 — 카드와 아래에서 올라오는 쓰기 창 */
 .bp-quote-text{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:1.08rem;line-height:1.75;color:#1d2a22;-webkit-line-clamp:6}
 .bp-by{text-align:right;font-family:'Nanum Myeongjo',serif;font-size:.9rem;color:#4f5e55;margin-top:6px}
@@ -3765,7 +3784,7 @@ function openComments(qid) {
   currentCommentQuote = qid;
   if (isPostKey(qid)) {   // v11.114: 자유게시판 글의 댓글
     const pp = findPost(qid.slice(2)) || { text: '', author: '' };
-    document.getElementById('commentQuote').innerHTML = `<div class="sq-text sq-post">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div><div class="sq-author">- ${escapeHTML(pp.by || pp.author || '익명')} -</div>${pp.note ? `<div class="sq-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}`;
+    document.getElementById('commentQuote').innerHTML = `<div class="sq-text sq-post">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div><div class="sq-author">- ${escapeHTML(pp.author || '익명')} -</div>${pp.note ? `<div class="sq-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}`;
   } else {
   const q = getQuote(qid);
   document.getElementById('commentQuote').innerHTML = `<div class="sq-text">${escapeHTML(q.text).split('\n').map(keepTail).join('<br>')}</div><div class="sq-author">- ${escapeHTML(q.author)} -</div>`;
@@ -4249,7 +4268,7 @@ async function renderTopComment() {
     return;
   }
   card.classList.add('has');
-  card.innerHTML = `<span class="tc-text">“${escapeHTML(pick.text.replace(/\s+/g, ' ').slice(0, 80))}”</span><span class="tc-by"><span class="tc-name">— ${escapeHTML(pick.by || pick.author || '익명')}</span><span class="tc-likes"><span class="tc-heart">♥</span>${pick.likes}</span></span>`;
+  card.innerHTML = `<span class="tc-text">“${escapeHTML(pick.text.replace(/\s+/g, ' ').slice(0, 80))}”</span><span class="tc-by"><span class="tc-name">— ${escapeHTML(pick.author || '익명')}</span><span class="tc-likes"><span class="tc-heart">♥</span>${pick.likes}</span></span>`;
 }
 (function () { const d = new Date(), el = document.getElementById('topDate'); if (el) el.textContent = `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; })();
 function goTopComment() { openBoard(); }   // v11.115: 홈 카드 → 자유게시판
@@ -5919,6 +5938,7 @@ const ServerBoard = {
     batch.set(ref, { text, by, note, authorName: author, authorAvatar: (authUser && authUser.avatar) || '', authorPhoto: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: this.uid,
                      createdAt: serverTimestamp(), likeCount: 0, likedBy: [], reportCount: 0, hidden: false });
     batch.set(doc(this.db, 'rate', this.uid), { last: serverTimestamp() });   // v11.122: 도배 막기
+    batch.set(doc(this.db, 'postDay', this.uid), { last: serverTimestamp() });   // v11.125: 하루 한 번
     await batch.commit();
     return ref.id;
   },
@@ -5979,7 +5999,7 @@ function loadMorePosts() {
   startBoardWatch();
 }
 function closeBoard() {
-  closeBoardCompose(); closeMemoConfirm();
+  closeBoardCompose(); closeMemoConfirm(); closePostViewer(true);
   document.getElementById('boardPage').classList.remove('open');
   if (boardUnsub) { try { boardUnsub(); } catch (e) {} boardUnsub = null; }
   renderTopComment();
@@ -5996,17 +6016,58 @@ function renderBoard() {
   const st = box.scrollTop;
   box.innerHTML = list.map(pp => {
     const av = pp.photo && isSafePhoto(pp.photo) ? `<img class="avatar-img" src="${pp.photo}" alt="">` : pp.avatar && pp.avatar !== 'photo' ? escapeHTML(pp.avatar) : escapeHTML((pp.author || '?').slice(0, 1));
-    return `<div class="bp-card ${pp.mine ? 'is-mine' : ''}" id="bp-${pp.id}" data-pid="${pp.id}">
-      <div class="bp-head"><div class="comment-avatar">${av}</div><span class="bp-name">${escapeHTML(pp.author || '익명')}</span>${pp.mine ? '<span class="mine-tag">내 명언</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
+    return `<div class="bp-card ${pp.mine ? 'is-mine' : ''}" id="bp-${pp.id}" data-pid="${pp.id}" onclick="if(!event.target.closest('button'))openPostViewer('${pp.id}')">
+      <div class="bp-head"><div class="comment-avatar">${av}</div>${pp.mine ? '<span class="mine-tag">내 명언</span>' : ''}${pp.reportedByMe ? '<span class="c-reported">⚠ 신고된 글</span>' : ''}
         <span class="bp-time">${timeAgo(pp.at)}${pp.edited ? '<span class="bp-edited">(수정됨)</span>' : ''}</span>
         ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 명언 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
-      <div class="bp-text bp-quote-text" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
-      ${pp.by ? `<div class="bp-by">— ${escapeHTML(pp.by)} —</div>` : ''}
-      ${pp.note ? `<div class="bp-note" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
+      <div class="bp-text bp-quote-text">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
+      <div class="bp-by">— ${escapeHTML(pp.author || '익명')} —</div>
+      ${pp.note ? `<div class="bp-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
   }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '명언 더 보기' : '이전 명언 더 보기'}</button>` : '');
   box.scrollTop = st;
+}
+/* v11.125: 명언을 누르면 한 장씩 넘겨 보는 슬라이드 화면 (위로 넘기면 다음 명언) */
+let pvList = [];
+function openPostViewer(id) {
+  triggerHaptic(); closePostViewer(true);
+  pvList = boardPosts.slice().sort(boardSort === 'likes' ? (a, b) => b.likes - a.likes || b.at - a.at : (a, b) => b.at - a.at);
+  const i = Math.max(0, pvList.findIndex(x => x.id === id));
+  document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="pv" id="postViewer" role="dialog" aria-label="나만의 명언 크게 보기">
+    <div class="pv-top"><button type="button" class="bp-back" onclick="closePostViewer()" aria-label="닫기"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <span class="pv-count" id="pvCount"></span></div>
+    <div class="pv-track" id="pvTrack">${pvList.map(pvSlideHTML).join('')}${boardHasMore ? `<section class="pv-slide pv-end"><button type="button" class="load-more" onclick="closePostViewer(); loadMorePosts()">이전 명언 더 보기</button></section>` : ''}</div>
+    <div class="pv-hint" id="pvHint">위로 넘기면 다음 명언</div>
+  </div>`);
+  const tr = document.getElementById('pvTrack');
+  tr.addEventListener('scroll', pvOnScroll, { passive: true });
+  requestAnimationFrame(() => { tr.scrollTop = i * tr.clientHeight; pvOnScroll(); });
+  setTimeout(() => { const h = document.getElementById('pvHint'); if (h) h.classList.add('gone'); }, 2600);
+}
+function pvSlideHTML(pp) {
+  return `<section class="pv-slide" data-pid="${pp.id}"><div class="pv-card">
+    <div class="pv-quote">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
+    <div class="pv-by">— ${escapeHTML(pp.author || '익명')} —</div>
+    ${pp.note ? `<div class="pv-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
+    <div class="pv-meta">${timeAgo(pp.at)}${pp.edited ? ' · 수정됨' : ''}</div>
+    <div class="bp-actions pv-actions"><button type="button" class="${pp.liked ? 'on' : ''}" id="pvLike-${pp.id}" onclick="pvLike('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
+  </div></section>`;
+}
+function pvOnScroll() {
+  const tr = document.getElementById('pvTrack'), c = document.getElementById('pvCount'); if (!tr || !c) return;
+  const i = Math.min(pvList.length, Math.round(tr.scrollTop / Math.max(1, tr.clientHeight)));
+  c.innerText = i < pvList.length ? `${i + 1} / ${pvList.length}` : '';
+}
+async function pvLike(id) {
+  await likePost(id);
+  const pp = findPost(id), b = document.getElementById(`pvLike-${id}`);
+  if (pp && b) { b.classList.toggle('on', pp.liked); b.innerText = `${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}`; }
+}
+function closePostViewer(now) {
+  const v = document.getElementById('postViewer'); if (!v) return;
+  if (now) { v.remove(); return; }
+  v.id = ''; v.classList.add('closing'); setTimeout(() => v.remove(), 220);
 }
 async function openPostComments(id) {
   let pp = findPost(id);
@@ -6020,9 +6081,25 @@ async function likePost(id) {
   try { await getBoard().like(pp); if (pp.liked && !pp.mine) notifyServer('postLike', id); }
   catch (e) { pp.liked = !pp.liked; pp.likes = Math.max(0, pp.likes + (pp.liked ? 1 : -1)); renderBoard(); showToast('공감하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
 }
-function openBoardCompose(editId) {
+/* v11.125: 나만의 명언은 하루에 한 번만 (한국 시간 기준 날짜). 서버도 postDay/{내 ID}로 한 번 더 확인 */
+const kstDay = ms => new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
+const DAILY_MSG = '나만의 명언은 하루에 한 번 쓸 수 있어요.\n내일 다시 만나요!';
+async function postedToday() {
+  const today = kstDay(Date.now());
+  if (lsGet('postDay', '') === today) return true;
+  if (!isServer() || !ServerStore.uid) return false;
+  try {
+    const { doc, getDoc } = ServerStore.fs;
+    const d = await withTimeout(getDoc(doc(ServerStore.db, 'postDay', ServerStore.uid)), 6000, 'firestore/timeout');
+    const last = d.exists() && d.data().last && d.data().last.toMillis ? d.data().last.toMillis() : 0;
+    if (last && kstDay(last) === today) { lsSet('postDay', today); return true; }
+  } catch (e) {}
+  return false;
+}
+async function openBoardCompose(editId) {
   if (needOnline()) return;
   triggerHaptic(); closeBoardCompose();
+  if (!editId && await postedToday()) { showToast(DAILY_MSG); return; }
   const pp = editId ? findPost(editId) : null; if (editId && (!pp || !pp.mine)) return;
   boardEditId = pp ? pp.id : null;
   /* v11.124: 아래에서 올라오는 작은 슬라이드 창 — 명언 · 누가 한 말 · 명언에 대한 이야기 */
@@ -6032,14 +6109,12 @@ function openBoardCompose(editId) {
       <div class="bp-compose-head"><b>${pp ? '명언 고치기' : '나만의 명언 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
       <label class="bp-field"><span class="bp-label">명언<small id="bpCount">0/${BOARD_MAX}</small></span>
         <textarea id="bpText" class="bp-in bp-in-quote" rows="3" maxlength="${BOARD_MAX}" placeholder="마음에 새긴 한 줄을 적어 주세요" oninput="onBoardInput()"></textarea></label>
-      <label class="bp-field"><span class="bp-label">누가 한 말인가요?<small>선택</small></span>
-        <input id="bpBy" class="bp-in" maxlength="${BY_MAX}" placeholder="예: 나, 어머니, 법정 스님" oninput="onBoardInput()"></label>
       <label class="bp-field"><span class="bp-label">명언에 대한 이야기<small>선택</small></span>
         <textarea id="bpNote" class="bp-in" rows="3" maxlength="${NOTE_MAX}" placeholder="이 말이 왜 마음에 남았는지 적어 보세요" oninput="onBoardInput()"></textarea></label>
       <button type="button" class="bp-send bp-send-full" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '등록하기'}</button>
     </div></div>`);
   const t = document.getElementById('bpText');
-  if (pp) { t.value = pp.text; document.getElementById('bpBy').value = pp.by || ''; document.getElementById('bpNote').value = pp.note || ''; }
+  if (pp) { t.value = pp.text; document.getElementById('bpNote').value = pp.note || ''; }
   onBoardInput();
   setTimeout(() => { t.focus(); const n = t.value.length; try { t.setSelectionRange(n, n); } catch (e) {} }, 120);
 }
@@ -6055,7 +6130,7 @@ function onBoardInput() {
 async function submitPost() {
   const t = document.getElementById('bpText'); if (!t || boardSending) return;
   const text = t.value.trim().slice(0, BOARD_MAX); if (!text) return;
-  const by = (document.getElementById('bpBy').value || '').trim().replace(/\s+/g, ' ').slice(0, BY_MAX);
+  const by = '';   // v11.125: '누가 한 말' 칸 없음 — 명언 아래에는 작성자 이름(닉네임)이 나옴
   const note = (document.getElementById('bpNote').value || '').trim().slice(0, NOTE_MAX);
   const all = [text, by, note].join('\n');
   if (hasBadWord(all)) { showToast(BAD_MSG); return; }
@@ -6063,12 +6138,13 @@ async function submitPost() {
   const B = getBoard();
   if (boardEditId) {
     const pp = findPost(boardEditId); if (!pp) { closeBoardCompose(); return; }
-    if (pp.text === text && (pp.by || '') === by && (pp.note || '') === note) { closeBoardCompose(); return; }
+    if (pp.text === text && (pp.note || '') === note) { closeBoardCompose(); return; }
     boardSending = true; onBoardInput();
     try { await B.edit(pp, text, by, note); pp.text = text; pp.by = by; pp.note = note; pp.edited = true; closeBoardCompose(); renderBoard(); showToast('명언을 고쳤어요 ✏️'); }
     catch (e) { showToast('수정하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
     boardSending = false; onBoardInput(); return;
   }
+  if (await postedToday()) { closeBoardCompose(); showToast(DAILY_MSG); return; }   // v11.125
   { const lim = postLimitMsg(); if (lim) { showToast(lim); return; } }
   if (!localStorage.getItem('communityTermsAgreed') && !(await askTerms())) return;
   let nick = getNickname();
@@ -6076,11 +6152,12 @@ async function submitPost() {
   boardSending = true; onBoardInput();
   try {
     await B.add(text, nick, by, note);
+    lsSet('postDay', kstDay(Date.now()));   // v11.125
     notePost(); triggerHaptic(); closeBoardCompose();
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
     showToast('명언이 등록되었어요 📝');
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
-  } catch (e) { showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
+  } catch (e) { showToast(/permission/i.test(errCode(e)) ? (await postedToday() ? DAILY_MSG : '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.') : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();
 }
 function boardMenu(html) {
