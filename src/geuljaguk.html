@@ -1455,6 +1455,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-compose textarea#bpNote{min-height:84px}
 .bp-in-quote{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:1.05rem}
 .bp-send-full{display:block;width:100%;height:50px;border-radius:14px;font-size:1.02rem;margin-top:4px}
+.bp-note-hint{margin-top:8px;font-size:.8rem;color:#7a8a80}
 /* v11.128: 쓸 수 없는 글 안내 */
 .bp-warn{display:none;white-space:pre-line;font-size:.86rem;line-height:1.5;color:#b5523b;background:#fdf1ee;border-radius:10px;padding:9px 12px;margin:-2px 0 10px}
 .bp-warn.show{display:block}
@@ -6048,7 +6049,7 @@ function renderBoard() {
         ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 한마디 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
       <div class="bp-text bp-quote-text">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
       <div class="bp-by">— ${escapeHTML(pp.author || '익명')} —</div>
-      ${pp.note ? `<div class="bp-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
+      ${pp.note ? '<div class="bp-note-hint">📖 담긴 이야기가 있어요 · 눌러서 보기</div>' : ''}   <!-- v11.128: 이야기는 목록에서 숨기고, 눌러서 크게 볼 때만 -->
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
   }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '한마디 더 보기' : '이전 한마디 더 보기'}</button>` : '');
