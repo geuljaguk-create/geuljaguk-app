@@ -87,15 +87,40 @@ def og_image(q, icon, path):
     d.text((x0 + 58, 539), '글자국', font=fb, fill=(29, 42, 34))
     im.save(path, optimize=True)
 
+ROOT_OG = """<meta property="og:type" content="website">
+<meta property="og:site_name" content="글자국">
+<meta property="og:title" content="글자국">
+<meta property="og:description" content="매일 한 걸음, 마음에 새기는 문장">
+<meta property="og:image" content="https://geuljaguk-e0920.web.app/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://geuljaguk-e0920.web.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="매일 한 걸음, 마음에 새기는 문장">
+"""
+
+def copy_app(www):
+    """웹 앱(index.html·Firebase 묶음·글꼴)을 public 에 복사. 첫 화면 링크 미리보기용 OG 태그를 <title> 뒤에 넣음"""
+    os.makedirs(OUT, exist_ok=True)
+    h = open(os.path.join(www, 'index.html'), encoding='utf-8').read()
+    if 'og:title' not in h:
+        h = h.replace('</title>\n', '</title>\n' + ROOT_OG, 1)
+    open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(h)
+    shutil.copy(os.path.join(www, 'firebase-bundle.js'), OUT)
+    if os.path.isdir(os.path.join(OUT, 'fonts')):
+        shutil.rmtree(os.path.join(OUT, 'fonts'))
+    shutil.copytree(os.path.join(www, 'fonts'), os.path.join(OUT, 'fonts'))
+
 def main():
     subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'prepare_www.py')], check=True)
     www = os.path.join(ROOT, 'www')
+    if '--app-only' in sys.argv:   # v11.131: 명언 문장은 그대로이고 앱 화면·안내 글만 바뀐 경우 — q/·og/ 그림은 두고 웹 앱만 바꿈 (그림 만들기는 10분 넘게 걸림)
+        copy_app(www)
+        print('웹 앱만 바꿈 (q/·og/ 그대로)')
+        return
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT)
-    shutil.copy(os.path.join(www, 'index.html'), OUT)
-    shutil.copy(os.path.join(www, 'firebase-bundle.js'), OUT)
-    shutil.copytree(os.path.join(www, 'fonts'), os.path.join(OUT, 'fonts'))
+    copy_app(www)
     for name in os.listdir(os.path.join(ROOT, 'firebase', 'pages')):
         s = os.path.join(ROOT, 'firebase', 'pages', name)
         (shutil.copytree if os.path.isdir(s) else shutil.copy)(s, os.path.join(OUT, name))
