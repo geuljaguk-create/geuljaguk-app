@@ -6119,7 +6119,7 @@ async function likePost(id) {
 }
 /* v11.125: 나만의 명언은 하루에 한 번만 (한국 시간 기준 날짜). 서버도 postDay/{내 ID}로 한 번 더 확인 */
 const kstDay = ms => new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
-const DAILY_MSG = '우리들의 한마디는 하루에 한 번 쓸 수 있어요.\n내일 다시 만나요!';
+const DAILY_MSG = '우리들의 한마디는 하루에 한 번 쓸 수 있어요.';
 async function postedToday() {
   const today = kstDay(Date.now());
   if (lsGet('postDay', '') === today) return true;
