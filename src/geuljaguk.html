@@ -1400,8 +1400,8 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 #homeHeader .toc-best .toc-sub.has{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden!important}
 #homeHeader .toc-best .toc-sub.has .tc-text{overflow-wrap:anywhere;word-break:keep-all;max-width:100%}
 .comment-text,.bp-text,.bp-note,.pv-quote,.pv-note,.sq-text,.sq-note{overflow-wrap:anywhere}
-/* v11.128: 제목 오른쪽 작은 글씨 '오늘의 공감 한마디' (오늘 공감이 가장 많은 글) */
-#homeHeader .toc-best .tc-best-label{display:inline-block;width:auto;margin:0 0 0 auto;font-size:.78rem;font-weight:700;color:#7a8a80;letter-spacing:.01em;white-space:nowrap;align-self:center}
+/* v11.128: 상자 바로 위 오른쪽 작은 글씨 '함께 공감한 한마디' (오늘 공감이 가장 많은 글) */
+#homeHeader .toc-best .tc-best-label{display:block;width:100%;text-align:right;margin:8px 2px -5px 0;font-size:.78rem;font-weight:700;color:#7a8a80;letter-spacing:.01em;white-space:nowrap}
 /* v11.127: 홈 '우리들의 한마디'(구 마음 한 줄) 상자 — 왼쪽 줄 없이 일반 칸으로 (시간대별 홈 모양에서도) */
 #homeHeader .toc-best .toc-sub.has,#homeHeader[class] .toc-best .toc-sub.has{border-left:none!important;border:1px solid rgba(29,42,34,.08)!important;border-radius:12px!important}
 /* v11.126: 슬라이드 보기에서 연 댓글 창 — 아래 절반, 명언 상자 없음, 뒤를 어둡게 가리지 않음 */
@@ -1599,7 +1599,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
       </svg>
       <nav class="book-toc" aria-label="목차">
         <h4>목 차</h4>
-        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="우리들의 한마디 열기"><span class="toc-best-t">우리들의 한마디</span><span class="tc-best-label" id="topBestLabel">오늘의 공감 한마디</span><span class="toc-sub" id="topComment"></span></div>
+        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="우리들의 한마디 열기"><span class="toc-best-t">우리들의 한마디</span><span class="tc-best-label" id="topBestLabel">함께 공감한 한마디</span><span class="toc-sub" id="topComment"></span></div>
         <div class="toc-trio toc-duo">
           <button type="button" class="toc-tile" onclick="openLibraryModal('likes')">내 보관함</button>
           <button type="button" class="toc-tile" onclick="openSearchModal()">검색</button>
