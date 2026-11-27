@@ -89,7 +89,7 @@ service cloud.firestore {
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 500
+        && request.resource.data.text.size() <= 50 && okChars(request.resource.data.text)   // v11.128: 한마디 50자, 허용 글자만
         && request.resource.data.authorName is string
         && request.resource.data.authorName.size() >= 1
         && request.resource.data.authorName.size() <= 12
@@ -105,14 +105,16 @@ service cloud.firestore {
     }
     function postExtrasOk(d) {
       return (!('by' in d) || (d.by is string && d.by.size() <= 20))
-        && (!('note' in d) || (d.note is string && d.note.size() <= 300));
+        && (!('note' in d) || (d.note is string && d.note.size() <= 300 && (d.note.size() == 0 || okChars(d.note))));
     }
+    // v11.128: 한글 완성 글자·영문·숫자·띄어쓰기·기본 문장부호만 (자음·모음만 쓴 글자, 특수문자, 이모티콘은 안 됨)
+    function okChars(t) { return t.matches("[가-힣a-zA-Z0-9\\s.,!?~'\"()·…-]+"); }
     function postEditUpdate() {
       let a = request.resource.data; let b = resource.data;
       return a.diff(b).affectedKeys().hasOnly(['text','by','note','editedAt'])
         && postExtrasOk(a)
         && b.authorUid == request.auth.uid
-        && a.text is string && a.text.size() > 0 && a.text.size() <= 500
+        && a.text is string && a.text.size() > 0 && a.text.size() <= 50 && okChars(a.text)
         && a.editedAt == request.time;
     }
 
