@@ -1570,7 +1570,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal()"></div>
 <div class="modal" id="infoModal">
   <div class="modal-header"><span class="modal-title" id="modalTitle">목록</span><button class="modal-close" type="button" onclick="closeModal()">&times;</button></div>
-  <input type="text" id="searchInput" class="search-input-box" placeholder="글귀나 작가 이름으로 검색..." style="display:none;" oninput="handleSearchInput()">
+  <input type="text" id="searchInput" class="search-input-box" placeholder="명언이나 작가 이름으로 검색..." style="display:none;" oninput="handleSearchInput()">
   <div class="category-tabs" id="categoryTabs"></div>
   <div id="modalContent"></div>
 </div>
@@ -2926,7 +2926,7 @@ const notiAllIds = () => notiIds().concat(Array.from({ length: NOTI_DAYS * 10 },
 const NOTI_CHANNEL = 'daily_line_sound';   // v11.99: 소리 나는 새 채널 (채널은 한 번 만들면 소리 설정을 못 바꿔서 새로 만듦)
 const NOTI_SOUND = 'geuljaguk_chime.wav';
 async function ensureNotiChannel(LN) {
-  try { if (LN.createChannel) await LN.createChannel({ id: NOTI_CHANNEL, name: '오늘의 한 줄', description: '매일 정한 시간에 오는 글귀 알림', importance: 4, visibility: 1, vibration: true, lights: true, sound: NOTI_SOUND }); } catch (e) {}
+  try { if (LN.createChannel) await LN.createChannel({ id: NOTI_CHANNEL, name: '오늘의 한 줄', description: '매일 정한 시간에 오는 명언 알림', importance: 4, visibility: 1, vibration: true, lights: true, sound: NOTI_SOUND }); } catch (e) {}
   try { if (LN.deleteChannel) await LN.deleteChannel({ id: 'daily_line' }); } catch (e) {}   // 소리 없던 예전 채널 정리
 }
 async function askExactAlarm(LN, ask) {
@@ -3305,7 +3305,7 @@ function pickCategory(cat, id) {
   renderQuotes();
   const first = document.getElementById('quotesSlidesContainer').firstElementChild;
   if (first) { fillNear(0); const box = document.getElementById('appContainer'); box.style.scrollSnapType = 'none'; box.scrollTop = first.offsetTop; requestAnimationFrame(() => { box.style.scrollSnapType = ''; }); }
-  showToast(cat ? `#${cat} 글귀만 모아 보여드려요` : '모든 글을 다시 보여드려요');
+  showToast(cat ? `#${cat} 명언만 모아 보여드려요` : '모든 글을 다시 보여드려요');
 }
 function toggleCategory(id) {
   triggerHaptic();
@@ -3316,7 +3316,7 @@ function toggleCategory(id) {
   renderQuotes();
   const el = document.getElementById(`quote-slide-${id}`);
   if (el) { fillNear(+el.dataset.idx); el.scrollIntoView({ behavior: 'auto' }); }
-  showToast(turningOff ? '모든 글을 다시 보여드려요' : `#${cur.cat} 글귀만 모아 보여드려요`);
+  showToast(turningOff ? '모든 글을 다시 보여드려요' : `#${cur.cat} 명언만 모아 보여드려요`);
 }
 
 /* ===== v8.9: 오늘의 한 걸음 줄바꿈 =====
@@ -4994,7 +4994,7 @@ function settingsBgmHTML() {
       <div class="slider-label-row"><span class="settings-section-label" style="margin:0">음량</span><span class="slider-value-text" id="bgmVolVal">${bgmVolume}%</span></div>
       <input type="range" id="bgmVolSlider" class="range-slider" min="0" max="100" step="5" value="${bgmVolume}" oninput="setBgmVolume(this.value)">
     </div>
-    <div class="settings-hint bgm-hint">음악이 켜져 있으면<br>홈과 글귀 화면 위쪽에 ♪ 버튼이 생겨요.<br>그 버튼을 누르면 음악이 바로 꺼져요.</div>
+    <div class="settings-hint bgm-hint">음악이 켜져 있으면<br>홈과 명언 화면 위쪽에 ♪ 버튼이 생겨요.<br>그 버튼을 누르면 음악이 바로 꺼져요.</div>
     <div class="settings-section-label">음악 고르기</div>
     <div class="bg-options-list ${bgmOn ? '' : 'is-off'}">
       ${Object.entries(BGM_TRACKS).map(([k, t]) => `<div class="theme-card ${bgmTrack === k ? 'active' : ''}" onclick="pickBgm('${k}')"><span>${t.icon} ${t.label}</span>${bgmTrack === k && bgmOn ? '<span class="solid-now">재생 중</span>' : ''}</div>`).join('')}
@@ -5054,7 +5054,7 @@ function openTipsModal() {
       <div class="tip-item"><span class="tip-ic">📋</span><div><div class="tip-t">우리들의 한마디</div><div class="tip-d">홈 화면의 '우리들의 한마디' 상자를 누르면<br>오늘 마음에 남은 한마디와 그 이야기를 나눌 수 있어요.<br>하루에 한 번, 50자까지 쓸 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔗</span><div><div class="tip-t">공유하기</div><div class="tip-d">왼쪽 아래 공유 버튼으로<br>친구에게 보내거나<br>사진으로 저장할 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">✏️</span><div><div class="tip-t">메모</div><div class="tip-d">왼쪽 아래 연필 아이콘을 누르면<br>글에 대한 메모나 일기를<br>적어둘 수 있어요!</div></div></div>
-      <div class="tip-item"><span class="tip-ic">🎨</span><div><div class="tip-t">글씨·배경 바꾸기</div><div class="tip-d">글귀 화면 오른쪽 위 <svg class="tip-inline-ic" viewBox="0 0 24 24" aria-label="네모 두 개 아이콘"><rect x="3" y="4" width="13" height="13" rx="2.5"></rect><rect x="12" y="11" width="9" height="9" rx="2"></rect></svg> 버튼을<br>누르면 배경과 글씨를<br>바꿔 볼 수 있어요!</div></div></div>
+      <div class="tip-item"><span class="tip-ic">🎨</span><div><div class="tip-t">글씨·배경 바꾸기</div><div class="tip-d">명언 화면 오른쪽 위 <svg class="tip-inline-ic" viewBox="0 0 24 24" aria-label="네모 두 개 아이콘"><rect x="3" y="4" width="13" height="13" rx="2.5"></rect><rect x="12" y="11" width="9" height="9" rx="2"></rect></svg> 버튼을<br>누르면 배경과 글씨를<br>바꿔 볼 수 있어요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔔</span><div><div class="tip-t">알림</div><div class="tip-d">설정 → 알림 설정에서 켜면<br>정한 시간에 새로운 명언을<br>보여줘요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔄</span><div><div class="tip-t">새로고침</div><div class="tip-d">홈 화면에서 아래로 당기면<br>화면이 새로고침돼요!</div></div></div>
       <div class="tip-item"><span class="tip-ic">🏠</span><div><div class="tip-t">홈</div><div class="tip-d">집 모양 버튼을 누르면<br>홈으로 돌아와요!</div></div></div>
@@ -5085,12 +5085,12 @@ function openMemo(id, from = '') {
       ${from === 'library' ? `<button type="button" class="memo-back" onclick="openLibraryModal('memos')">‹ 메모 목록으로</button>` : ''}
       <div class="memo-quote">${escapeHTML(flat(q.text))}<small>- ${escapeHTML(q.author)} -</small></div>
       <div class="memo-date">${memoDay(m ? m.created : Date.now())}${m && m.at !== m.created ? `<span>${fmtDate(m.at)} 고침</span>` : ''}</div>
-      <textarea id="memoInput" class="memo-paper" maxlength="${MEMO_MAX}" placeholder="이 글귀를 읽고 떠오른 생각이나&#10;오늘 하루를 적어 보세요.">${m ? escapeHTML(m.text) : ''}</textarea>
+      <textarea id="memoInput" class="memo-paper" maxlength="${MEMO_MAX}" placeholder="이 명언을 읽고 떠오른 생각이나&#10;오늘 하루를 적어 보세요.">${m ? escapeHTML(m.text) : ''}</textarea>
       <div class="memo-actions">
         ${m ? `<button type="button" class="memo-del" id="memoDel" onclick="deleteMemo(${id})">지우기</button>` : ''}
         <button type="button" class="memo-save" onclick="saveMemo(${id})">저장하기</button>
       </div>
-      ${from === 'library' ? `<button type="button" class="memo-go" onclick="scrollToQuote(${id})">이 글귀 보러 가기</button>` : ''}
+      ${from === 'library' ? `<button type="button" class="memo-go" onclick="scrollToQuote(${id})">이 명언 보러 가기</button>` : ''}
     </div>`;
   showModalElement();
 }
@@ -5142,7 +5142,7 @@ function openLibraryModal(tab = libraryTab) {
     <div class="cat-tab ${tab === 'memos' ? 'active' : ''}" onclick="openLibraryModal('memos')">${MEMO_ICON} 메모 ${memoIds.length}</div>`;
   if (tab === 'memos') {
     document.getElementById('modalContent').innerHTML = memoIds.length === 0
-      ? emptyItem(`아직 적어 둔 메모가 없어요.<br><small style="margin-top:8px;line-height:1.6;">글귀 화면의 ${MEMO_ICON.replace('tab-ico', 'inline-ico')} 버튼을 눌러<br>일기처럼 적어 보세요</small>`)
+      ? emptyItem(`아직 적어 둔 메모가 없어요.<br><small style="margin-top:8px;line-height:1.6;">명언 화면의 ${MEMO_ICON.replace('tab-ico', 'inline-ico')} 버튼을 눌러<br>일기처럼 적어 보세요</small>`)
       : memoIds.map(id => { const q = getQuote(id), m = memos[id]; return `
         <div class='modal-list-item memo-item' onclick="openMemo(${id}, 'library')">
           <div class="memo-item-q">${escapeHTML(q.text).split('\n').map(keepTail).join('<br>')}<small>- ${escapeHTML(q.author)} -</small></div>
@@ -5156,7 +5156,7 @@ function openLibraryModal(tab = libraryTab) {
   const list = baseQuotes.filter(q => ids.includes(q.id));
   const remover = isLikes ? 'removeBookmark' : 'removeShared';
   document.getElementById('modalContent').innerHTML = list.length === 0
-    ? emptyItem(isLikes ? '아직 좋아요 누른 문장이 없어요.<br><small style="margin-top:8px;line-height:1.6;">글귀 카드의 하트를 누르거나<br>화면을 두 번 톡톡 눌러 보세요</small>'
+    ? emptyItem(isLikes ? '아직 좋아요 누른 문장이 없어요.<br><small style="margin-top:8px;line-height:1.6;">명언 카드의 하트를 누르거나<br>화면을 두 번 톡톡 눌러 보세요</small>'
                        : `아직 공유한 한 줄이 없어요.<br><small style="margin-top:8px;line-height:1.6;">${LINK_ICON.replace('tab-ico', 'inline-ico')} 버튼으로 소중한 사람에게<br>공유해보세요</small>`)
     : list.map(q => listItem(q, `<div class="list-right-actions"><button type="button" class="remove-btn" title="삭제" onclick="${remover}(event, ${q.id})">✕</button></div>`)).join('');
   showModalElement();
@@ -5279,7 +5279,7 @@ function settingsReadHTML() {
 function settingsReadHTMLOld() {
   const colorName = (COLORS.find(c => c.hex === currentTextColor.toLowerCase()) || { name: '직접 선택' }).name;
   return `
-    <div class="settings-hint">글귀를 읽을 때의 화면을 바꿔요. 변경하면 뒤 화면에 바로 적용돼요.</div>
+    <div class="settings-hint">명언을 읽을 때의 화면을 바꿔요. 변경하면 뒤 화면에 바로 적용돼요.</div>
     <div class="settings-group">
       <div class="settings-nav-row" onclick="openSettingsModal('bg')">
         <span class="nav-icon">🖼️</span><span class="nav-label">배경</span>
@@ -5355,7 +5355,7 @@ function actListHTML() {
   return list.map(c => {
     const q = getQuote(c.quoteId), onBoard = isPostKey(c.quoteId);
     return `<div class="act-item" onclick="goActComment('${c.quoteId}')">
-      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 우리들의 한마디 · 내가 쓴 한마디' : '📋 우리들의 한마디') : q ? escapeHTML(flat(q.text)) : '사라진 글귀'}</div>
+      <div class="act-quote ${onBoard ? 'act-board' : ''}">${onBoard ? (c.kind === 'post' ? '📋 우리들의 한마디 · 내가 쓴 한마디' : '📋 우리들의 한마디') : q ? escapeHTML(flat(q.text)) : '사라진 명언'}</div>
       ${c.parent ? `<div class="act-parent"><b>${escapeHTML(c.parent.author || '익명')}</b> ${escapeHTML(c.parent.text)}</div>` : ''}
       <div class="act-text">${c.parent ? '↳ ' : ''}${escapeHTML(c.text)}</div>
       <div class="act-meta">${c.mine ? '' : `${escapeHTML(c.author || '익명')} · `}${timeAgo(c.at)} · 공감 ${c.likes || 0}</div>
@@ -5378,7 +5378,7 @@ function goActComment(qid) {
   triggerHaptic(); closeSettingsPanel();
   if (isPostKey(String(qid))) { const pid = String(qid).slice(2); openBoard(); setTimeout(() => openPostComments(pid), 500); return; }   // v11.120: 자유게시판
   qid = +qid;
-  if (!getQuote(qid)) { showToast('이 글귀는 지금 목록에 없어요.'); return; }
+  if (!getQuote(qid)) { showToast('이 명언은 지금 목록에 없어요.'); return; }
   scrollToQuote(qid); setTimeout(() => openComments(qid), 450);
 }
 /* v11.116: 배경은 작은 미리보기 그림으로 고르고, 이름은 그림 아래에 */
@@ -5854,7 +5854,7 @@ function startLanding() {
       <img class="wl-icon" src="${appIconSrc()}" alt="">
       <div class="wl-name">글자국</div>
       <div class="wl-line">매일 한 걸음, 마음에 새기는 문장</div>
-      <ul class="wl-feat"><li>📖 하루 한 줄, 마음에 남는 글귀</li><li>💬 글귀마다 나누는 공감과 댓글</li><li>🔔 원하는 시간에 오늘의 한 줄 알림</li></ul>
+      <ul class="wl-feat"><li>📖 하루 한 줄, 마음에 남는 명언</li><li>💬 명언마다 나누는 공감과 댓글</li><li>🔔 원하는 시간에 오늘의 한 줄 알림</li></ul>
       <div class="wl-btns">${storeButtonsHTML()}</div>
     </div>`);
 }
@@ -5890,7 +5890,7 @@ function startShareView() {
 function showInstallPrompt() {
   prepModal('📲 앱에서 이어 보기');
   document.getElementById('modalContent').innerHTML = `
-    <ul class="wl-feat in-modal"><li>📖 매일 새로운 글귀</li><li>💬 공감·댓글로 마음 나누기</li><li>🔔 원하는 시간에 오늘의 한 줄</li></ul>
+    <ul class="wl-feat in-modal"><li>📖 매일 새로운 명언</li><li>💬 공감·댓글로 마음 나누기</li><li>🔔 원하는 시간에 오늘의 한 줄</li></ul>
     ${storeButtonsHTML()}`;
   showModalElement();
 }
@@ -6622,11 +6622,11 @@ function openWelcomeGuide() {
   document.getElementById('modalContent').innerHTML = `
     <p class="wg-hello"><b>${escapeHTML((authUser && authUser.name) || '')}</b>님, 반가워요 🙂</p>
     <div class="tip-list wg-list">
-      <div class="tip-item"><span class="tip-ic">📖</span><div><div class="tip-t">글귀 읽기</div><div class="tip-d">화면을 위로 밀면 글귀가 한 장씩 나와요.</div></div></div>
+      <div class="tip-item"><span class="tip-ic">📖</span><div><div class="tip-t">명언 읽기</div><div class="tip-d">화면을 위로 밀면 명언이 한 장씩 나와요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">🤍</span><div><div class="tip-t">좋아요</div><div class="tip-d">화면을 두 번 톡톡! 내 보관함에 모여요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">💬</span><div><div class="tip-t">댓글·메모</div><div class="tip-d">말풍선은 댓글, 연필은 나만 보는 메모예요.</div></div></div>
       <div class="tip-item"><span class="tip-ic">🔗</span><div><div class="tip-t">공유하기</div><div class="tip-d">왼쪽 아래 공유 버튼으로 친구에게 보내거나 사진으로 저장해요.</div></div></div>
-      <div class="tip-item"><span class="tip-ic">⚙️</span><div><div class="tip-t">글씨·배경</div><div class="tip-d">글귀 화면 오른쪽 위 네모 두 개 버튼에서 바꿀 수 있어요.</div></div></div>
+      <div class="tip-item"><span class="tip-ic">⚙️</span><div><div class="tip-t">글씨·배경</div><div class="tip-d">명언 화면 오른쪽 위 네모 두 개 버튼에서 바꿀 수 있어요.</div></div></div>
     </div>
     <div class="wg-more">더 자세한 내용은 설정 → 이용 팁에 있어요.</div>
     <button type="button" class="share-option-btn primary wg-start" onclick="closeModal()">시작하기</button>`;
