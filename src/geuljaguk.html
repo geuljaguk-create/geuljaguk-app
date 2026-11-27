@@ -1315,6 +1315,29 @@ body.share-view .quote-box.has-guide{padding-bottom:32px!important}
 .c-reported{font-size:.68rem;font-weight:800;color:#d93025;background:#fdecea;border:1px solid #f5c2bd;padding:1px 6px;border-radius:8px;white-space:nowrap}
 .cmenu-btn.cmenu-admin{color:#b3261e;border-color:#f5c2bd}
 .admin-row{background:#fff;border:1px solid #e5e9e5;border-radius:14px;padding:12px;margin-bottom:10px}
+/* v11.130: 운영자 관리 — 탭 · 숫자 카드 · 금칙어 · 기록 */
+.adm-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tabs button{flex:none;border:1px solid #d8e0da;background:#fff;color:#33423a;font-family:inherit;font-size:.86rem;font-weight:700;border-radius:999px;padding:8px 13px;cursor:pointer}
+.adm-tabs button.on{background:#2e4a3b;border-color:#2e4a3b;color:#fff}
+.adm-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.adm-stats-one{grid-template-columns:1fr}
+.adm-stat{background:#f3f6f3;border-radius:14px;padding:12px 14px}
+.adm-stat-l{font-size:.8rem;color:#5b6b62;font-weight:700}
+.adm-stat-v{font-size:1.6rem;font-weight:800;color:#1d2a22;margin-top:2px;font-variant-numeric:tabular-nums}
+.adm-stat-s{font-size:.74rem;color:#94a3b8;margin-top:2px}
+.adm-refresh{display:block;width:100%;margin-top:10px;height:44px;border-radius:12px;border:1px solid #d8e0da;background:#fff;color:#2e4a3b;font-family:inherit;font-weight:700;font-size:.92rem;cursor:pointer}
+.adm-add{display:flex;gap:8px;align-items:center;margin:10px 0}
+.adm-add .login-input{flex:1;min-width:0;margin:0}
+.adm-add .login-submit{width:auto;padding:0 18px;margin:0;height:46px}
+.adm-words{display:flex;flex-wrap:wrap;gap:6px}
+.adm-word{display:inline-flex;align-items:center;gap:4px;background:#fdf1ee;color:#8a3a26;border-radius:999px;padding:5px 6px 5px 12px;font-size:.88rem;font-weight:600}
+.adm-word button{border:none;background:none;color:#8a3a26;font-size:1.1rem;width:26px;height:26px;border-radius:50%;cursor:pointer;line-height:1}
+.adm-logs{display:flex;flex-direction:column;gap:6px}
+.adm-log{background:#fff;border:1px solid #e5e9e5;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.adm-log-a{font-size:.82rem;font-weight:800;color:#2e4a3b}
+.adm-log-t{font-size:.9rem;color:#1d2a22;overflow-wrap:anywhere}
+.adm-log-m{font-size:.74rem;color:#94a3b8}
 .admin-meta{display:flex;gap:8px;align-items:center;font-size:.75rem;color:#7c8a80;margin-bottom:6px}
 .admin-cnt{color:#d93025;font-weight:800}
 .admin-gone{color:#94a3b8}
@@ -3484,7 +3507,9 @@ function postLimitMsg() {
 }
 function notePost() { const now = Date.now(); lsSet('myPostTimes', lsGet('myPostTimes', []).filter(x => now - x < 86400000 * 2).concat(now).slice(-200)); }
 const escapeHTML = t => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-const hasBadWord = t => { const low = t.toLowerCase().replace(/[\s.\-_]/g, ''); return BAD_WORDS.some(w => low.includes(w)); };
+/* v11.130: 운영자가 앱에서 추가한 금칙어(config/badwords)도 함께 검사 — 하루 한 번 받아 둠 */
+let BAD_EXTRA = (() => { try { const a = JSON.parse(localStorage.getItem('badWordsExtra') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
+const hasBadWord = t => { const low = t.toLowerCase().replace(/[\s.\-_]/g, ''); return BAD_WORDS.some(w => low.includes(w)) || BAD_EXTRA.some(w => w && low.includes(w)); };
 function timeAgo(at) {
   const m = Math.floor((Date.now() - at) / 60000);
   if (m < 1) return '방금 전';
@@ -3773,6 +3798,7 @@ async function initCommunityRun() {
   }
   await refreshCommentCounts();
   await renderTopComment();
+  syncBadWords();   // v11.130: 운영자가 추가한 금칙어
 }
 /* v11.101: 댓글 수 오류 수정 — 따로 더하고 빼 두던 숫자(quoteStats)는 어긋날 수 있어서,
    서버 모드에서는 화면에 보이는 글귀마다 실제 댓글(숨김 제외)을 세어서 보여줌 */
@@ -4234,6 +4260,7 @@ function showReportMenu(c, id, sheet) {
 async function adminDeleteFromSheet(id) {
   closeMemoConfirm();
   const c = findComment(id); if (!c || !isAdminUser) return;
+  AdminOps.log('댓글 삭제', `${c.author || '익명'}: ${c.text}`);   // v11.130
   try { await Community.adminDelete({ commentId: id, quoteId: c.quoteId, exists: true }); commentCache = commentCache.filter(x => x.id !== id); renderComments(); showToast('운영자 권한으로 삭제했어요.'); renderTopComment(); }
   catch (e) { showToast(`삭제하지 못했어요. (${errCode(e)})`); }
 }
@@ -4282,13 +4309,23 @@ const todayStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return 
   const next = new Date(); next.setHours(24, 0, 1, 0);
   setTimeout(() => { renderTopComment(); scheduleMidnightReset(); }, next - Date.now());
 })();
+let topPickCache = null;   // v11.130
 async function renderTopComment() {
   /* v11.115: 홈 카드는 '자유게시판' — 오늘 올라온 가장 최근 글을 미리 보여 주고, 누르면 게시판으로 */
   { const d = new Date(), el = document.getElementById('topDate'); if (el) el.textContent = `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; }
   const card = document.getElementById('topComment'); if (!card) return;
   let pick = null;
+  /* v11.130: 운영자가 오늘의 추천으로 고정한 명언이 있으면 그것을 먼저 (10분 동안 다시 묻지 않음) */
+  const lab = document.getElementById('topBestLabel');
+  try {
+    if (!topPickCache || Date.now() - topPickCache.at > 600000) topPickCache = { at: Date.now(), v: await AdminOps.getPick() };
+    const pk = topPickCache.v;
+    if (pk && pk.postId && pk.day === kstDay(Date.now())) pick = findPost(pk.postId) || await getBoard().get(pk.postId);
+    if (pick && !isVisible(pick)) pick = null;
+  } catch (e) { pick = null; }
+  if (lab) lab.textContent = pick ? '오늘의 추천 명언' : '함께 공감한 명언';
   /* v11.128: '오늘의 BEST 명언' — 오늘 올라온 글 중 공감이 가장 많은 글 (같으면 최근 글) */
-  try { pick = (await getBoard().latest(20)).filter(isVisible).filter(x => !lsGet('reportedIds', []).includes('post_' + x.id)).filter(x => x.at >= todayStart()).sort((a, b) => b.likes - a.likes || b.at - a.at)[0] || null; } catch (e) {}
+  if (!pick) try { pick = (await getBoard().latest(20)).filter(isVisible).filter(x => !lsGet('reportedIds', []).includes('post_' + x.id)).filter(x => x.at >= todayStart()).sort((a, b) => b.likes - a.likes || b.at - a.at)[0] || null; } catch (e) {}
   topCommentQid = null;
   if (!pick) {
     card.classList.remove('has');
@@ -5245,7 +5282,7 @@ function settingsMainHTML() {
       <div class="settings-nav-row" onclick="openSettingsModal('comments')">
         <span class="nav-icon">💬</span><span class="nav-label">댓글</span>${CHEVRON}
       </div>
-      ${isAdminUser ? `<div class="settings-nav-row" onclick="openSettingsModal('admin')"><span class="nav-icon">🛡</span><span class="nav-label">신고 관리 (운영자)</span>${CHEVRON}</div>` : ''}
+      ${isAdminUser ? `<div class="settings-nav-row" onclick="openSettingsModal('admin')"><span class="nav-icon">🛡</span><span class="nav-label">운영자 관리</span>${CHEVRON}</div>` : ''}
     </div>
     <div class="settings-group-title">고객 지원</div>
     <div class="settings-group">
@@ -5294,10 +5331,142 @@ function settingsReadHTMLOld() {
 let actTab = 'mine', actData = null;
 /* ===== v11.104: 운영자 신고 관리 — 신고된 댓글을 보고 '삭제' 또는 '문제없음' ===== */
 let adminList = null;
+/* ===== v11.130: 운영자 기능 — 오늘 한눈에 보기 · 금칙어 추가 · 추천 명언 고정 · 처리 기록 =====
+   서버: config/badwords {words}, config/pick {postId, day}, adminLog/{자동} — 모두 운영자만 쓰기 (보안 규칙) */
+const AdminOps = {
+  get fs() { return ServerStore.fs; }, get db() { return ServerStore.db; },
+  async stats() {
+    if (!isServer()) {
+      const t0 = todayStart(), posts = lsGet('boardPosts', []);
+      return { newUsers: 0, users: 1, posts: posts.filter(x => x.at >= t0).length, comments: LocalStore.all().filter(c => c.at >= t0).length, reports: 0 };
+    }
+    const { collection, query, where, getCountFromServer, Timestamp } = this.fs, since = Timestamp.fromMillis(todayStart());
+    const n = async q => { try { return (await withTimeout(getCountFromServer(q), 10000, 'firestore/timeout')).data().count; } catch (e) { return null; } };
+    const [newUsers, users, posts, comments, reports] = await Promise.all([
+      n(query(collection(this.db, 'users'), where('nicknameSetAt', '>=', since))), n(collection(this.db, 'users')),
+      n(query(collection(this.db, 'posts'), where('createdAt', '>=', since))), n(query(collection(this.db, 'comments'), where('createdAt', '>=', since))),
+      n(collection(this.db, 'reports'))]);
+    return { newUsers, users, posts, comments, reports };
+  },
+  async getWords() {
+    if (!isServer()) return lsGet('adminBadWords', []);
+    const { doc, getDoc } = this.fs; const d = await getDoc(doc(this.db, 'config', 'badwords'));
+    return d.exists() && Array.isArray(d.data().words) ? d.data().words : [];
+  },
+  async setWords(words) {
+    if (!isServer()) { lsSet('adminBadWords', words); return; }
+    const { doc, setDoc, serverTimestamp } = this.fs; await setDoc(doc(this.db, 'config', 'badwords'), { words, updatedAt: serverTimestamp() });
+  },
+  async getPick() {
+    if (!isServer()) return lsGet('adminPick', null);
+    const { doc, getDoc } = this.fs; const d = await getDoc(doc(this.db, 'config', 'pick'));
+    return d.exists() ? d.data() : null;
+  },
+  async setPick(postId) {
+    const v = postId ? { postId, day: kstDay(Date.now()) } : { postId: '', day: '' };
+    if (!isServer()) { lsSet('adminPick', v); return; }
+    const { doc, setDoc, serverTimestamp } = this.fs; await setDoc(doc(this.db, 'config', 'pick'), { ...v, updatedAt: serverTimestamp() });
+  },
+  async log(action, text) {
+    try {
+      const item = { action, text: String(text || '').replace(/\s+/g, ' ').slice(0, 80) };
+      if (!isServer()) { lsSet('adminLog', [{ ...item, at: Date.now(), by: '나' }].concat(lsGet('adminLog', [])).slice(0, 50)); return; }
+      const { collection, addDoc, serverTimestamp } = this.fs;
+      await addDoc(collection(this.db, 'adminLog'), { ...item, by: ServerStore.uid, byName: (authUser && authUser.name) || '', at: serverTimestamp() });
+    } catch (e) { console.warn('[글자국] 처리 기록 실패', e && e.code); }
+  },
+  async logs() {
+    if (!isServer()) return lsGet('adminLog', []);
+    const { collection, query, orderBy, limit, getDocs } = this.fs;
+    const snap = await withTimeout(getDocs(query(collection(this.db, 'adminLog'), orderBy('at', 'desc'), limit(40))), 10000, 'firestore/timeout');
+    return snap.docs.map(d => { const x = d.data(); return { ...x, at: x.at && x.at.toMillis ? x.at.toMillis() : Date.now(), by: x.byName || '운영자' }; });
+  }
+};
+/* 앱을 켤 때 운영자 금칙어를 하루 한 번 받아 둠 (모든 사용자) */
+async function syncBadWords() {
+  const today = kstDay(Date.now());
+  if (isServer() && localStorage.getItem('badWordsDay') === today) return;
+  try { BAD_EXTRA = (await AdminOps.getWords()).map(w => String(w).toLowerCase()); localStorage.setItem('badWordsExtra', JSON.stringify(BAD_EXTRA)); localStorage.setItem('badWordsDay', today); } catch (e) {}
+}
+let adminTab = 'today', adminData = {};
+const ADMIN_TABS = [['today', '📊 오늘'], ['reports', '🚨 신고'], ['words', '🚫 금칙어'], ['pick', '📌 추천'], ['logs', '📜 기록']];
+function setAdminTab(k) { triggerHaptic(); adminTab = k; openSettingsModal(); }
+async function loadAdminTab() {
+  const k = adminTab;
+  try {
+    if (k === 'reports') return loadAdminReports();
+    if (k === 'today') adminData.today = await AdminOps.stats();
+    if (k === 'words') adminData.words = await AdminOps.getWords();
+    if (k === 'pick') { const pk = await AdminOps.getPick(); adminData.pick = pk; adminData.pickPost = pk && pk.postId && pk.day === kstDay(Date.now()) ? (findPost(pk.postId) || await getBoard().get(pk.postId).catch(() => null)) : null; }
+    if (k === 'logs') adminData.logs = await AdminOps.logs();
+  } catch (e) { adminData[k] = null; showToast(`불러오지 못했어요. (${errCode(e)})`); }
+  const el = document.getElementById('adminBody'); if (el && settingsPage === 'admin' && adminTab === k) el.innerHTML = adminTabHTML();
+}
+function adminTabHTML() {
+  const k = adminTab, d = adminData[k];
+  if (k === 'reports') return `<div class="settings-hint">이용자가 신고한 댓글·명언이에요.<br>삭제하면 모두에게서 사라지고,<br>답글은 그대로 남아요.</div><div id="adminList">${adminList ? adminListHTML() : '<div class="block-empty">불러오는 중…</div>'}</div>`;
+  if (d === undefined) return '<div class="block-empty">불러오는 중…</div>';
+  if (k === 'today') {
+    if (!d) return '<div class="block-empty">숫자를 불러오지 못했어요.</div>';
+    const card = (label, v, sub) => `<div class="adm-stat"><div class="adm-stat-l">${label}</div><div class="adm-stat-v">${v == null ? '—' : v.toLocaleString()}</div>${sub ? `<div class="adm-stat-s">${sub}</div>` : ''}</div>`;
+    return `<div class="settings-hint">오늘(자정부터 지금까지) 숫자예요.</div>
+      <div class="adm-stats">${card('오늘 새 이용자', d.newUsers, '닉네임을 정한 사람')}${card('전체 이용자', d.users)}${card('오늘 올라온 명언', d.posts, '오늘의 내 명언')}${card('오늘 달린 댓글', d.comments)}</div>
+      <div class="adm-stats adm-stats-one">${card('처리할 신고', d.reports, d.reports ? '신고 탭에서 처리해 주세요' : '없어요 🙂')}</div>
+      <button type="button" class="adm-refresh" onclick="adminData.today=undefined; openSettingsModal()">↻ 새로 고침</button>`;
+  }
+  if (k === 'words') {
+    const ws = d || [];
+    return `<div class="settings-hint">여기 추가한 말이 들어간 댓글·명언은 모든 이용자 앱에서 올릴 수 없어요.<br>기본 금칙어(욕설 등)는 이미 들어 있어요.</div>
+      <div class="adm-add"><input id="admWord" class="login-input" maxlength="20" placeholder="막을 말 (예: 광고문구)" onkeydown="if(event.key==='Enter')adminAddWord()"><button type="button" class="login-submit" onclick="adminAddWord()">추가</button></div>
+      <div class="adm-words">${ws.length ? ws.map((w, i) => `<span class="adm-word">${escapeHTML(w)}<button type="button" aria-label="${escapeHTML(w)} 지우기" onclick="adminRemoveWord(${i})">×</button></span>`).join('') : '<div class="block-empty">추가한 금칙어가 없어요.</div>'}</div>
+      <div class="settings-hint" style="margin-top:10px;">이용자 앱에는 하루 안에 적용돼요.</div>`;
+  }
+  if (k === 'pick') {
+    const pp = adminData.pickPost;
+    return `<div class="settings-hint">고른 명언이 오늘 하루 홈 화면 '오늘의 내 명언' 상자에 고정돼요.<br>내일이 되면 자동으로 풀려요.</div>
+      ${pp ? `<div class="admin-row"><div class="admin-meta"><span class="admin-cnt">📌 오늘의 추천</span></div><div class="admin-text">“${escapeHTML(pp.text)}”<br><small>— ${escapeHTML(pp.author || '익명')}</small></div>
+        <div class="admin-btns"><button type="button" class="admin-ok" onclick="adminSetPick('')">고정 풀기</button></div></div>`
+        : '<div class="block-empty">오늘 고정한 명언이 없어요.</div>'}
+      <div class="settings-hint" style="margin-top:6px;">고르는 방법: '오늘의 내 명언' 목록에서 명언을 길게 누르고<br>'📌 오늘의 추천으로 고정'을 누르세요.</div>
+      <button type="button" class="adm-refresh" onclick="closeSettingsPanel(); openBoard()">오늘의 내 명언 열기</button>`;
+  }
+  if (k === 'logs') {
+    const ls = d || [];
+    return `<div class="settings-hint">운영자가 처리한 일이 최근 순서로 남아요.</div>
+      ${ls.length ? `<div class="adm-logs">${ls.map(x => `<div class="adm-log"><span class="adm-log-a">${escapeHTML(x.action)}</span><span class="adm-log-t">${escapeHTML(x.text || '')}</span><span class="adm-log-m">${escapeHTML(x.by || '')} · ${timeAgo(x.at)}</span></div>`).join('')}</div>` : '<div class="block-empty">아직 기록이 없어요.</div>'}`;
+  }
+  return '';
+}
+async function adminAddWord() {
+  const el = document.getElementById('admWord'); if (!el) return;
+  const w = el.value.trim().toLowerCase().replace(/\s+/g, ''); if (!w) return;
+  if (w.length < 2) { showToast('두 글자 이상 넣어 주세요.'); return; }
+  const ws = (adminData.words || []).slice(); if (ws.includes(w) || BAD_WORDS.includes(w)) { showToast('이미 들어 있는 말이에요.'); return; }
+  ws.push(w);
+  try { await AdminOps.setWords(ws); adminData.words = ws; BAD_EXTRA = ws; localStorage.setItem('badWordsExtra', JSON.stringify(ws)); AdminOps.log('금칙어 추가', w); triggerHaptic(); showToast(`'${w}'을(를) 막았어요.`); openSettingsModal(); }
+  catch (e) { showToast(`저장하지 못했어요. (${errCode(e)})`); }
+}
+async function adminRemoveWord(i) {
+  const ws = (adminData.words || []).slice(); const w = ws[i]; if (w == null) return;
+  ws.splice(i, 1);
+  try { await AdminOps.setWords(ws); adminData.words = ws; BAD_EXTRA = ws; localStorage.setItem('badWordsExtra', JSON.stringify(ws)); AdminOps.log('금칙어 삭제', w); triggerHaptic(); openSettingsModal(); }
+  catch (e) { showToast(`저장하지 못했어요. (${errCode(e)})`); }
+}
+async function adminSetPick(postId) {
+  closeMemoConfirm();
+  try {
+    await AdminOps.setPick(postId); topPickCache = null;
+    const pp = postId ? findPost(postId) : adminData.pickPost;
+    AdminOps.log(postId ? '추천 고정' : '추천 해제', pp ? pp.text : '');
+    showToast(postId ? '오늘의 추천으로 고정했어요 📌' : '고정을 풀었어요.');
+    adminData.pick = undefined; adminData.pickPost = null; renderTopComment();
+    if (settingsPage === 'admin') openSettingsModal();
+  } catch (e) { showToast(`저장하지 못했어요. (${errCode(e)})`); }
+}
 function settingsAdminHTML() {
   if (!isAdminUser) return '<div class="block-empty">운영자만 볼 수 있어요.</div>';
-  return `<div class="settings-hint">이용자가 신고한 댓글이에요.<br>삭제하면 모두에게서 사라지고,<br>답글은 그대로 남아요.</div>
-    <div id="adminList">${adminList ? adminListHTML() : '<div class="block-empty">불러오는 중…</div>'}</div>`;
+  return `<div class="adm-tabs" role="tablist">${ADMIN_TABS.map(([k, l]) => `<button type="button" role="tab" aria-selected="${adminTab === k}" class="${adminTab === k ? 'on' : ''}" onclick="setAdminTab('${k}')">${l}</button>`).join('')}</div>
+    <div id="adminBody">${adminTabHTML()}</div>`;
 }
 function adminListHTML() {
   if (!adminList.length) return '<div class="block-empty">처리할 신고가 없어요 🙂</div>';
@@ -5324,6 +5493,7 @@ async function adminAct(i, kind) {
   if (kind === 'delete' && r.exists !== false && !(adminArm[key] && Date.now() - adminArm[key] < 3000)) { adminArm[key] = Date.now(); showToast('한 번 더 누르면 삭제돼요.'); return; }
   try {
     if (kind === 'delete') await Community.adminDelete(r); else await Community.adminDismiss(r);
+    AdminOps.log(kind === 'delete' ? (r.postId ? '명언 삭제(신고)' : '댓글 삭제(신고)') : '문제없음 처리', `${r.author || '익명'}: ${r.text || ''}`);   // v11.130
     adminList.splice(i, 1);
     const el = document.getElementById('adminList'); if (el) el.innerHTML = adminListHTML();
     showToast(kind === 'delete' ? '댓글을 삭제했어요.' : '문제없음으로 처리했어요.');
@@ -5485,13 +5655,13 @@ function openSettingsModal(page) {
   if (settingsPage === 'bgm') settingsPage = 'main';   // v11.123: 음악 화면 없음
   if (settingsScope === 'read' && ['bg', 'text'].includes(settingsPage)) { readTab = settingsPage; settingsPage = 'main'; }   // 읽기 창 안에서는 탭으로
   const prev = moved ? 0 : body.scrollTop;
-  const titles = { main: '⚙ 설정', bg: '배경', text: '글씨', noti: '알림 설정', bgm: '배경음악', login: '로그인', profile: '프로필 수정', comments: '댓글', blocks: '신고·차단 관리', admin: '신고 관리' };
+  const titles = { main: '⚙ 설정', bg: '배경', text: '글씨', noti: '알림 설정', bgm: '배경음악', login: '로그인', profile: '프로필 수정', comments: '댓글', blocks: '신고·차단 관리', admin: '운영자 관리' };
   if (settingsPage === 'profile' && !authUser) settingsPage = 'login';
   document.getElementById('settingsTitle').innerText = settingsPage === 'main' && settingsScope === 'read' ? '읽기 설정' : titles[settingsPage];
   document.getElementById('settingsBackBtn').style.display = settingsPage === 'main' ? 'none' : 'flex';
   body.innerHTML = ({ bg: settingsBgHTML, text: settingsTextHTML, noti: settingsNotiHTML, bgm: settingsBgmHTML, login: settingsLoginHTML, profile: settingsProfileHTML, comments: settingsCommentsHTML, blocks: settingsBlocksHTML, admin: settingsAdminHTML }[settingsPage] || (settingsScope === 'read' ? settingsReadHTML : settingsMainHTML))();
   if (settingsPage === 'comments') loadMyActivity();
-  if (settingsPage === 'admin') loadAdminReports();
+  if (settingsPage === 'admin') loadAdminTab();   // v11.130
   const sp = document.getElementById('settingsPanel');
   const drop = settingsScope !== 'read', sheet = settingsScope === 'read';
   if (!sp.classList.contains('open') && (sp.classList.contains('drop') !== drop || sp.classList.contains('read-sheet') !== sheet)) {   // 닫혀 있을 때만 모양을 바꿈 (화면을 가로지르지 않게)
@@ -6221,6 +6391,7 @@ function openMyPostMenu(id) {
   boardMenu(`<p><b>내 명언</b></p>
     <button type="button" class="cmenu-btn" onclick="closeMemoConfirm(); openBoardCompose('${id}')">✏️ 수정하기</button>
     <button type="button" class="cmenu-btn" onclick="askDeletePost('${id}')">🗑️ 삭제하기</button>
+    ${isAdminUser ? `<button type="button" class="cmenu-btn cmenu-admin" onclick="adminSetPick('${id}')">📌 오늘의 추천으로 고정</button>` : ''}
     <button type="button" class="cmenu-btn cmenu-cancel" onclick="closeMemoConfirm()">취소</button>`);
 }
 function askDeletePost(id) {
@@ -6230,6 +6401,7 @@ function askDeletePost(id) {
 async function deletePost(id, asAdmin) {
   closeMemoConfirm();
   const pp = findPost(id); if (!pp) return;
+  if (asAdmin) AdminOps.log('명언 삭제', `${pp.author || '익명'}: ${pp.text}`);   // v11.130
   try { await (asAdmin ? getBoard().adminDelete(pp) : getBoard().remove(pp)); boardPosts = boardPosts.filter(x => x.id !== id); renderBoard(); showToast(asAdmin ? '운영자 권한으로 삭제했어요.' : '글을 삭제했어요.'); }
   catch (e) { showToast(`삭제하지 못했어요. (${errCode(e)})`); }
 }
@@ -6239,7 +6411,7 @@ function openPostMenu(id) {   // 남의 글 길게 누르기 → 신고
   boardMenu(`<p><b>${escapeHTML(pp.author || '익명')}</b>님의 글</p>
     <div class="cmenu-quote">${escapeHTML(pp.text.length > 60 ? pp.text.slice(0, 60) + '…' : pp.text)}</div>
     <button type="button" class="cmenu-btn" ${done ? 'disabled' : ''} onclick="reportPost('${id}')">🚨 ${done ? '이미 신고한 글이에요' : '신고하기'}</button>
-    ${isAdminUser ? `<button type="button" class="cmenu-btn cmenu-admin" onclick="deletePost('${id}', true)">🛡 운영자 삭제</button>` : ''}
+    ${isAdminUser ? `<button type="button" class="cmenu-btn cmenu-admin" onclick="adminSetPick('${id}')">📌 오늘의 추천으로 고정</button><button type="button" class="cmenu-btn cmenu-admin" onclick="deletePost('${id}', true)">🛡 운영자 삭제</button>` : ''}
     <button type="button" class="cmenu-btn cmenu-cancel" onclick="closeMemoConfirm()">취소</button>`);
 }
 async function reportPost(id) {

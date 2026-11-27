@@ -129,6 +129,7 @@ service cloud.firestore {
     }
     match /users/{uid} {
       allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow list: if isAdmin();   // v11.130: 운영자 '오늘 한눈에 보기'의 이용자 수 세기
       allow create: if signedIn() && request.auth.uid == uid && validProfile()
         && request.resource.data.nicknameSetAt == request.time
         // v11.99: 닉네임 등록부(nicknames)에 내 이름으로 함께 올린 경우만 (중복 닉네임 방지)
@@ -198,6 +199,22 @@ service cloud.firestore {
       allow update: if realUser() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time
         && (request.time + duration.value(9, 'h')).date() != (resource.data.last + duration.value(9, 'h')).date();
+    }
+
+    // ---------- v11.130: 운영자 설정 — config/badwords(추가 금칙어), config/pick(오늘의 추천 명언) ----------
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && id in ['badwords', 'pick']
+        && (id != 'badwords' || (request.resource.data.words is list && request.resource.data.words.size() <= 500))
+        && (id != 'pick' || (request.resource.data.postId is string && request.resource.data.postId.size() <= 40));
+    }
+    // ---------- v11.130: 운영자 처리 기록 (운영자만 쓰고 봄, 고치거나 지울 수 없음) ----------
+    match /adminLog/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.by == request.auth.uid && request.resource.data.at == request.time
+        && request.resource.data.action is string && request.resource.data.action.size() <= 30
+        && request.resource.data.text is string && request.resource.data.text.size() <= 100;
+      allow update, delete: if false;
     }
 
     // ---------- 명언별 댓글 수 ----------
