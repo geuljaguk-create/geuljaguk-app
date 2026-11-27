@@ -4663,7 +4663,8 @@ function settingsLoginHTML() {
         <button type="button" class="login-submit ghost" onclick="emailAuth(true)">회원가입</button>
       </div>
     </div>
-    <div class="settings-hint" style="text-align:center;margin-top:14px;">로그인하면 이용약관 및 개인정보 처리방침에 동의하게 됩니다.</div>`;
+    <div class="settings-hint" style="text-align:center;margin-top:14px;">로그인하면 이용약관 및 개인정보 처리방침에 동의하게 됩니다.</div>
+    <div class="settings-group" style="margin-top:16px;"><div class="settings-nav-row" onclick="openExternal(SHARE_BASE_URL + 'privacy/')"><span class="nav-icon">🔒</span><span class="nav-label">개인정보처리방침</span>${CHEVRON}</div></div>`;
 }
 let draftAvatar = null, draftPhoto = null, draftThumb = null;
 function settingsProfileHTML() {
@@ -4690,7 +4691,9 @@ function settingsProfileHTML() {
     <div class="account-actions">
       <button type="button" class="logout-btn" onclick="askLogout()">로그아웃</button>
       <button type="button" class="withdraw-btn" onclick="askDeleteAccount()">회원 탈퇴</button>
-    </div></div>`;
+    </div>
+    <div class="settings-group" style="margin-top:16px;"><div class="settings-nav-row" onclick="openExternal(SHARE_BASE_URL + 'privacy/')"><span class="nav-icon">🔒</span><span class="nav-label">개인정보처리방침</span>${CHEVRON}</div></div>   <!-- v11.128: 개인정보처리방침은 프로필 메뉴 안으로 -->
+    </div>`;
 }
 function rerenderProfileKeepNick() { openSettingsModal(); }
 /* '닉네임 변경' 버튼: 한 달이 안 지났으면 안내, 지났으면 새 닉네임 입력 창 */
@@ -5259,11 +5262,6 @@ function settingsMainHTML() {
       <div class="profile-avatar">${authUser ? avatarHTML(authUser.avatar || '🌿', authUser.photo, '🌿') : '👤'}</div>
       <div class="profile-text"><div class="profile-name">${name}</div><div class="profile-sub">${sub}</div></div>
       ${authUser ? '' : '<span class="login-pill">로그인</span>'}${CHEVRON}
-    </div>
-    <div class="settings-group" style="margin-top:14px;">
-      <div class="settings-nav-row" onclick="openExternal(SHARE_BASE_URL + 'privacy/')">
-        <span class="nav-icon">🔒</span><span class="nav-label">개인정보처리방침</span>${CHEVRON}
-      </div>
     </div>
     <div class="settings-foot settings-foot-one">
       <small>※ 일부 글은 뜻을 살려 옮기거나 줄인 것이며, 출처가 분명하지 않은 전해지는 말도 있습니다.</small>
