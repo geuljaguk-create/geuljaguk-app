@@ -5435,7 +5435,7 @@ function settingsNotiHTML() {
   return `
     <div class="settings-group">
       ${toggleRow('🔔 매일 알림 받기', isNotificationEnabled, 'toggleNotification', '정한 시간에 오늘의 한 줄이 와요')}
-      ${toggleRow('💬 댓글 알림', isCommentPushOn, 'toggleCommentPush', '내 한마디·댓글에 답글이나 공감이 달리면')}
+      ${toggleRow('💬 댓글 알림', isCommentPushOn, 'toggleCommentPush', '댓글에 답글이나 공감이 달리면')}
     </div>
     <div class="settings-section-label">알림 시간</div>
     <div class="settings-group nt-group ${isNotificationEnabled ? '' : 'is-off'}">
