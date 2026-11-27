@@ -3809,6 +3809,7 @@ function openComments(qid) {
   document.getElementById('commentQuote').innerHTML = `<div class="sq-text">${escapeHTML(q.text).split('\n').map(keepTail).join('<br>')}</div><div class="sq-author">- ${escapeHTML(q.author)} -</div>`;
   }
   document.getElementById('commentNotice').style.display = Community.mode === 'local' ? 'block' : 'none';
+  document.getElementById('commentQuote').style.display = isPostKey(qid) ? 'none' : '';   // v11.128: 우리들의 한마디 댓글 창에는 위쪽 글 상자 없음
   document.getElementById('commentOverlay').classList.add('show');
   document.getElementById('commentSheet').classList.add('open');
   startCommentWatch(qid);   // v11.122: 실시간 목록을 먼저 켜서 같은 댓글을 두 번 읽지 않게
