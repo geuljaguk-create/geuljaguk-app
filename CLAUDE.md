@@ -1,6 +1,6 @@
 # 글자국 — 작업 메모 (Claude용)
 
-- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.121).
+- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.122).
 - 사용자용·운영자용 두 가지를 **항상 같이** 만든다. 차이는 `const ADMIN_BUILD = true/false;` 한 줄뿐이며 `tools/prepare_www.py --admin` 이 바꿔 준다. 원본 HTML은 `false`(사용자용)로 둔다.
 - 배경음악은 HTML 안 `<script type="text/plain" id="bgmdata-*">`(base64)로 들어 있고, prepare_www가 `www/bgm/*.mp3`로 꺼낸다.
 - 빌드: `npm ci`(postinstall로 patch-package가 카카오 플러그인의 옛 jcenter 저장소를 고침) → `bash tools/build.sh` → `out/글자국-사용자용.apk`, `out/글자국-운영자용.apk`. Android SDK·JDK 21 필요. Claude 작업 공간에서는 gradlew 다운로드가 막혀 `GRADLE=gradle bash tools/build.sh`, Maven Central 429가 나면 몇 번 다시 시도.
@@ -12,3 +12,6 @@
 - `firebase/public/`은 공유 링크 웹페이지 결과물(웹 앱, 글귀별 q/번호, og 그림, assetlinks). 명언이 바뀌면 `python3 tools/build_web.py`로 다시 만든 뒤 Firebase 배포. (2026-11-12 복원본 스크립트 — 그림 모양이 예전과 거의 같지만 완전히 같진 않음)
 - 2026-11-12 작업 공간 초기화 후 test48 APK와 v11.119 HTML에서 복원함. 위젯 자바 코드는 APK에서 되살려 다시 정리한 것.
 - 사용자는 한국어로 소통, 5060 대상 앱. 맞춤법·띄어쓰기는 표준어 기준.
+- Firebase 코드 묶음 `assets/firebase-bundle.js`는 `node tools/firebase-bundle/build.mjs`로 다시 만든다(firebase 11.10.0 + app-check 포함).
+- v11.122 요금 줄이기: 댓글 30개씩·게시글 20개씩, 게시판 댓글 수는 보이는 글만 집계, 글쓰기는 `rate/{uid}`로 10초 간격(보안 규칙), 익명 계정은 글쓰기 불가. 댓글 최신순 조회에 복합 색인(`firebase/firestore.indexes.json`)이 필요하다(배포 스크립트가 함께 올림).
+- App Check(Play Integrity)는 앱에 들어가 있지만 Firebase 콘솔에서 '적용'은 꺼 둔다. 켜면 스토어 설치본이 아닌 APK(테스트용·GitHub 빌드)는 서버 접속이 막힌다.

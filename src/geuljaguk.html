@@ -1381,6 +1381,9 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-actions button{border:none;background:#f1f5f2;color:#475569;font-family:inherit;font-size:.84rem;font-weight:600;border-radius:999px;padding:7px 13px;cursor:pointer}
 .bp-actions .on{color:#e11d48;background:#fdecef}
 .bp-empty{text-align:center;color:#64748b;padding:60px 10px;line-height:1.8;font-size:.95rem}
+/* v11.122: 이전 댓글·글 더 보기 */
+.load-more{display:block;margin:14px auto 10px;padding:11px 22px;border-radius:999px;border:1px solid rgba(15,23,42,.14);background:#fff;color:#334155;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer}
+.load-more:disabled{opacity:.6}
 .bp-write{position:absolute;right:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));border:none;background:#2e4a3b;color:#fff;font-family:inherit;font-size:1rem;font-weight:700;border-radius:999px;padding:14px 22px;box-shadow:0 8px 20px rgba(29,42,34,.3);cursor:pointer}
 .bp-compose{position:fixed;inset:0;z-index:255;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;padding:calc(56px + env(safe-area-inset-top,0px)) 14px 14px;animation:mcIn .18s ease}
 .bp-compose-box{width:100%;max-width:520px;background:#fff;border-radius:20px;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.25)}
@@ -3342,10 +3345,11 @@ const BAD_WORDS = ['씨발', '시발', 'ㅅㅂ', '병신', 'ㅂㅅ', '개새', '
   '죽어라', '뒤져라', '뒤지고', '자살해', 'bitch', 'asshole', 'motherfucker', 'dick', 'pussy', 'porn'];
 const BAD_MSG = '부적절한 언어 사용으로\n댓글이 제한됩니다.';
 /* v11.88: 도배 방지 — 10초 안에 5개, 하루 50개까지 (이 기기에서 쓴 시각 기록) */
-const POST_BURST = 5, POST_BURST_MS = 10000, POST_DAILY = 50;
+const POST_BURST = 1, POST_BURST_MS = 10000, POST_DAILY = 50;   // v11.122: 10초에 1개 (서버 규칙과 같게)
+const COMMENT_PAGE = 30, BOARD_PAGE = 20;   // v11.122: 한 번에 불러오는 댓글·게시글 수
 function postLimitMsg() {
   const now = Date.now(), t = lsGet('myPostTimes', []).filter(x => now - x < 86400000 * 2);
-  if (t.filter(x => now - x < POST_BURST_MS).length >= POST_BURST) return '너무 빠르게 쓰고 있어요.\n잠시 후 다시 남겨 주세요.';
+  if (t.filter(x => now - x < POST_BURST_MS).length >= POST_BURST) return '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.';
   if (t.filter(x => x >= todayStart()).length >= POST_DAILY) return `댓글은 하루 ${POST_DAILY}개까지 남길 수 있어요.\n내일 다시 만나요!`;
   return '';
 }
@@ -3423,8 +3427,8 @@ const ServerStore = {
   mode: 'server', uid: null, db: null, fs: null,
   async init() {
     /* v11.68: 앱에는 Firebase 코드를 함께 넣어 둠(firebase-bundle.js) → 인터넷에서 받아오지 않아도 됨. 없으면(웹 미리보기) gstatic에서 */
-    let appM, authM, fsM, fnM;
-    try { ({ appM, authM, fsM, fnM } = await import('./firebase-bundle.js')); }
+    let appM, authM, fsM, fnM, acM;
+    try { ({ appM, authM, fsM, fnM, acM } = await import('./firebase-bundle.js')); }
     catch (e) {
       const base = `https://www.gstatic.com/firebasejs/${FB_VER}`;
       [appM, authM, fsM, fnM] = await Promise.all([import(`${base}/firebase-app.js`), import(`${base}/firebase-auth.js`), import(`${base}/firebase-firestore.js`), import(`${base}/firebase-functions.js`)]);
@@ -3450,10 +3454,28 @@ const ServerStore = {
     this.uid = auth.currentUser ? auth.currentUser.uid : null;
     this.app = app; this.fnM = fnM;   // v11.77: 카카오 로그인 서버 함수 호출용
     this.fs = fsM;
+    this.initAppCheck(app, acM);   // v11.122
     this.db = fsM.getFirestore(app);
     await Auth.attach(auth, authM);
     if (localStorage.getItem('profilePending')) Auth.pushPendingProfile();
     return true;
+  },
+  /* v11.122: App Check — 요청마다 '진짜 글자국 앱(플레이스토어 설치본)에서 왔다'는 표시를 붙임 (Play Integrity).
+     Firebase 콘솔에서 '적용'을 켜기 전까지는 막지 않고 기록만 됨. 표시를 못 받아도 앱은 평소처럼 동작 */
+  initAppCheck(app, acM) {
+    try {
+      const C = window.Capacitor, AC = C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.FirebaseAppCheck;
+      if (!AC || !acM) return;
+      const ready = AC.initialize({ isTokenAutoRefreshEnabled: true }).catch(e => console.warn('[글자국] App Check 준비 실패', e && e.message));
+      acM.initializeAppCheck(app, {
+        provider: new acM.CustomProvider({ getToken: async () => {
+          await ready;
+          const r = await withTimeout(AC.getToken(), 6000, 'appcheck/timeout');
+          return { token: r.token, expireTimeMillis: r.expireTimeMillis || Date.now() + 30 * 60000 };
+        } }),
+        isTokenAutoRefreshEnabled: true
+      });
+    } catch (e) { console.warn('[글자국] App Check 켜기 실패', e && e.message); }
   },
   norm(d) {
     const c = d.data();
@@ -3463,15 +3485,28 @@ const ServerStore = {
              likes: c.likeCount || 0, liked: likedBy.includes(this.uid), mine: c.authorUid === this.uid, hidden: !!c.hidden, edited: !!c.editedAt,
              reportedByMe: (c.reportedBy || []).includes(this.uid) };
   },
-  async list(qid) {
-    const { collection, query, where, limit, getDocs } = this.fs;
-    const snap = await getDocs(query(collection(this.db, 'comments'), where('quoteId', '==', qid), limit(200)));
+  /* v11.122: 요금 줄이기 — 댓글은 최신 n개(처음 30개)만 받고, '이전 댓글 더 보기'를 누르면 30개씩 더.
+     서버 색인(firestore.indexes.json)이 아직 없으면 예전 방식(최대 200개)으로 */
+  async list(qid, n = COMMENT_PAGE) {
+    const { collection, query, where, orderBy, limit, getDocs } = this.fs, col = collection(this.db, 'comments');
+    let snap;
+    try { snap = await getDocs(query(col, where('quoteId', '==', qid), orderBy('createdAt', 'desc'), limit(n))); }
+    catch (e) { if (!(e && e.code === 'failed-precondition')) throw e; snap = await getDocs(query(col, where('quoteId', '==', qid), limit(200))); }
     return snap.docs.map(d => this.norm(d));
   },
   /* v11.114: 댓글 창이 열려 있는 동안 새 댓글·공감을 실시간으로 받음 */
-  watch(qid, cb) {
-    const { collection, query, where, limit, onSnapshot } = this.fs;
-    return onSnapshot(query(collection(this.db, 'comments'), where('quoteId', '==', qid), limit(200)), snap => cb(snap.docs.map(d => this.norm(d))), e => console.warn('[글자국] 실시간 댓글 끊김', e && e.code));
+  watch(qid, cb, n = COMMENT_PAGE) {
+    const { collection, query, where, orderBy, limit, onSnapshot } = this.fs, col = collection(this.db, 'comments');
+    let unsub = null, stopped = false;
+    const sub = (q, old) => {
+      unsub = onSnapshot(q, snap => cb(snap.docs.map(d => this.norm(d))), e => {
+        if (stopped) return;
+        if (!old && e && e.code === 'failed-precondition') { console.warn('[글자국] 댓글 색인 준비 중 — 예전 방식으로'); sub(query(col, where('quoteId', '==', qid), limit(200)), true); return; }
+        console.warn('[글자국] 실시간 댓글 끊김', e && e.code); cb(null, e);
+      });
+    };
+    sub(query(col, where('quoteId', '==', qid), orderBy('createdAt', 'desc'), limit(n)), false);
+    return () => { stopped = true; if (unsub) { try { unsub(); } catch (e) {} } };
   },
   async add(qid, text, author, parentId = '') {
     const { collection, doc, serverTimestamp, writeBatch, increment } = this.fs;
@@ -3484,6 +3519,7 @@ const ServerStore = {
     const ref = doc(collection(this.db, 'comments'));
     batch.set(ref, data);
     batch.set(doc(this.db, 'quoteStats', String(qid)), { count: increment(1) }, { merge: true });
+    batch.set(doc(this.db, 'rate', this.uid), { last: serverTimestamp() });   // v11.122: 도배 막기 — 서버가 10초 간격을 확인
     await batch.commit();
     return ref.id;
   },
@@ -3637,6 +3673,7 @@ function openComments(qid) {
   if (needOnline()) return;
   triggerHaptic();
   commentSort = 'recent';   // v11.96: 댓글 창을 열 때는 항상 최신순
+  commentLimit = COMMENT_PAGE; commentHasMore = false;   // v11.122
   if (!focusReplyOf) openReplies.clear();   // v11.113: 열 때마다 답글은 접힌 상태로
   currentCommentQuote = qid;
   if (isPostKey(qid)) {   // v11.114: 자유게시판 글의 댓글
@@ -3649,22 +3686,40 @@ function openComments(qid) {
   document.getElementById('commentNotice').style.display = Community.mode === 'local' ? 'block' : 'none';
   document.getElementById('commentOverlay').classList.add('show');
   document.getElementById('commentSheet').classList.add('open');
+  startCommentWatch(qid);   // v11.122: 실시간 목록을 먼저 켜서 같은 댓글을 두 번 읽지 않게
   loadAndRenderComments();
-  startCommentWatch(qid);
 }
 /* v11.114: 실시간 댓글 — 창이 열려 있는 동안만 */
 let commentUnsub = null;
+let commentLimit = 30, commentHasMore = false;   // v11.122: 지금 받아 둔 댓글 수 / 더 있는지
 function stopCommentWatch() { if (commentUnsub) { try { commentUnsub(); } catch (e) {} commentUnsub = null; } }
 function startCommentWatch(qid) {
   stopCommentWatch();
-  try { commentUnsub = Community.watch ? Community.watch(qid, list => { if (qid === currentCommentQuote) applyCommentList(qid, list, true); }) : null; } catch (e) { commentUnsub = null; }
+  try {
+    commentUnsub = Community.watch ? Community.watch(qid, (list, err) => {
+      if (qid !== currentCommentQuote) return;
+      if (!list) { if (!commentCache.length || commentCache[0].quoteId !== qid) loadAndRenderComments(true); return; }   // 실시간이 끊기면 한 번 불러오기
+      applyCommentList(qid, list, true);
+    }, commentLimit) : null;
+  } catch (e) { commentUnsub = null; }
+}
+/* v11.122: '이전 댓글 더 보기' — 30개씩 더 받기 */
+function loadMoreComments() {
+  if (currentCommentQuote == null || needOnline()) return;
+  triggerHaptic();
+  commentLimit += COMMENT_PAGE;
+  const btn = document.getElementById('commentMore'); if (btn) { btn.disabled = true; btn.innerText = '불러오는 중…'; }
+  startCommentWatch(currentCommentQuote);
 }
 function applyCommentList(qid, list, keepScroll) {
   const rep = lsGet('reportedIds', []);
   const mineEditing = editTo && findComment(editTo.id);
   commentCache = list.filter(isVisible); commentCache.forEach(c => { if (rep.includes(c.id)) c.reportedByMe = true; });
   if (mineEditing && !findComment(editTo.id)) cancelReply();   // 고치던 댓글이 사라졌으면 수정 취소
-  commentCounts[qid] = commentCache.length;
+  /* v11.122: 받아 둔 개수가 꽉 찼으면 더 있을 수 있음 → 전체 개수는 서버에서 셈(가벼운 집계) */
+  commentHasMore = isServer() && list.length >= commentLimit;
+  if (!commentHasMore) commentCounts[qid] = commentCache.length;
+  else refreshCountFor(qid, false).then(() => { if (qid === currentCommentQuote) { const el = document.getElementById('commentTotal'); if (el) el.innerText = commentCounts[qid] || ''; } });
   const box = document.getElementById('commentList'), st = box ? box.scrollTop : 0;
   renderComments();
   if (keepScroll && box) box.scrollTop = st;
@@ -3719,12 +3774,13 @@ function closeComments() {
   document.getElementById('commentInput').blur();
   currentCommentQuote = null;
 }
-async function loadAndRenderComments() {
+async function loadAndRenderComments(force) {
   const qid = currentCommentQuote; if (qid == null) return;
   const box = document.getElementById('commentList');
   if (!commentCache.length || commentCache[0].quoteId !== qid) box.innerHTML = `<div class="comment-empty">불러오는 중…</div>`;
+  if (!force && commentUnsub && isServer()) return;   // v11.122: 실시간 목록이 곧 채움 (같은 댓글을 두 번 읽지 않게)
   let list;
-  try { list = await Community.list(qid); }
+  try { list = await Community.list(qid, commentLimit); }
   catch (e) { box.innerHTML = `<div class="comment-empty">댓글을 불러오지 못했어요.<br><small>인터넷 연결을 확인해 주세요.</small></div>`; return; }
   if (qid !== currentCommentQuote) return;   // 그 사이 다른 명언을 열었으면 무시
   applyCommentList(qid, list, false);
@@ -3741,11 +3797,16 @@ function renderComments() {
   const qid = currentCommentQuote; if (qid == null) return;
   const list = commentCache.slice().sort(commentSort === 'likes' ? (a, b) => b.likes - a.likes || b.at - a.at : (a, b) => b.at - a.at);
   document.getElementById('commentSort').innerHTML = [['recent', '최신순'], ['likes', '공감순']].map(([k, l]) => `<button type="button" role="tab" aria-selected="${commentSort === k}" class="${commentSort === k ? 'on' : ''}" onclick="setCommentSort('${k}')">${l}</button>`).join('');
-  document.getElementById('commentTotal').innerText = list.length || '';
+  document.getElementById('commentTotal').innerText = (commentHasMore ? Math.max(commentCounts[qid] || 0, list.length) : list.length) || '';
   /* v11.78: 답글은 원래 댓글 바로 아래에 오래된 순으로. 원래 댓글이 지워졌으면 '삭제된 댓글' 자리 표시 */
   const tops = list.filter(c => !c.parentId);
   const kids = {}; list.filter(c => c.parentId).forEach(c => { (kids[c.parentId] = kids[c.parentId] || []).push(c); });
-  Object.keys(kids).forEach(pid => { kids[pid].sort((a, b) => a.at - b.at); if (!tops.some(t => t.id === pid)) tops.push({ id: pid, gone: true, at: kids[pid][0].at, likes: 0 }); });
+  Object.keys(kids).forEach(pid => {
+    kids[pid].sort((a, b) => a.at - b.at);
+    if (tops.some(t => t.id === pid)) return;
+    if (commentHasMore) { delete kids[pid]; return; }   // v11.122: 원래 댓글이 아직 안 불러온 옛 댓글이면 답글도 그때 함께 보여 줌
+    tops.push({ id: pid, gone: true, at: kids[pid][0].at, likes: 0 });
+  });
   if (commentSort !== 'likes') tops.sort((a, b) => b.at - a.at);
   document.getElementById('commentList').innerHTML = list.length === 0
     ? `<div class="comment-empty">💬<br>아직 댓글이 없어요.<br><b>첫 번째 생각을 남겨보세요!</b></div>`
@@ -3754,7 +3815,7 @@ function renderComments() {
         const n = kids[c.id] ? kids[c.id].length : 0, open = n && openReplies.has(c.id);
         const head = c.gone ? `<div class="comment-item comment-gone">삭제된 댓글이에요${n ? `<div class="comment-actions">${replyToggleHTML(c.id, n)}</div>` : ''}</div>` : commentItemHTML(c, false, n);
         return head + (open ? `<div class="reply-list">${kids[c.id].map(r => commentItemHTML(r, true)).join('')}${c.gone ? '' : `<button type="button" class="reply-write" onclick="startReply('${c.id}')">✏️ 답글 쓰기</button>`}</div>` : '');
-      }).join('');
+      }).join('') + (commentHasMore ? `<button type="button" class="load-more" id="commentMore" onclick="loadMoreComments()">${commentSort === 'likes' ? '댓글 더 보기' : '이전 댓글 더 보기'}</button>` : '');
   if (focusReplyOf) {   // 알림으로 들어오면 그 댓글로 이동
     const el = document.getElementById(`ci-${focusReplyOf}`); focusReplyOf = null;
     if (el) setTimeout(() => { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('c-flash'); setTimeout(() => el.classList.remove('c-flash'), 1600); }, 120);
@@ -3908,7 +3969,7 @@ async function submitComment() {
     showToast(wasReply ? '답글을 남겼어요 💬' : '댓글이 등록되었어요 💬');
     renderTopComment();
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }   // v11.111: 첫 댓글 뒤 알림 권한
-  } catch (e) { showToast('등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
+  } catch (e) { showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   sending = false; onCommentInput(input);
 }
 const findComment = id => commentCache.find(c => c.id === id);
@@ -4126,7 +4187,7 @@ function nickUnlockAt() {
 const nickLocked = () => !!(authUser && authUser.name);   // v11.53: 한 번 정한 닉네임은 바꿀 수 없음
 const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
 /* 고른 사진을 가운데 정사각형으로 잘라 작게 만듦 (프로필 256px, 댓글용 64px) */
-function resizePhoto(file, size) {
+function resizePhoto(file, size, q = .82) {
   return new Promise((res, rej) => {
     const isStr = typeof file === 'string';   // v11.79: 사진첩에서 받은 data URL도 처리
     const url = isStr ? file : URL.createObjectURL(file);
@@ -4135,7 +4196,7 @@ function resizePhoto(file, size) {
       const c = document.createElement('canvas'); c.width = c.height = size;
       const s0 = Math.min(img.width, img.height);
       c.getContext('2d').drawImage(img, (img.width - s0) / 2, (img.height - s0) / 2, s0, s0, 0, 0, size, size);
-      if (!isStr) URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .82));
+      if (!isStr) URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q));
     };
     img.onerror = () => { if (!isStr) URL.revokeObjectURL(url); rej(new Error('image')); };
     img.src = url;
@@ -4334,6 +4395,7 @@ const Auth = {
         for (const d of rep.docs) { try { await updateDoc(d.ref, { reportedBy: arrayRemove(u.uid), reportCount: increment(-1) }); } catch (e) {} }
       } catch (e) {}
       try { await deleteDoc(doc(ServerStore.db, 'users', u.uid)); } catch (e) {}
+      try { await deleteDoc(doc(ServerStore.db, 'rate', u.uid)); } catch (e) {}   // v11.122
       try { if (authUser && authUser.name) await deleteDoc(doc(ServerStore.db, 'nicknames', nickKey(authUser.name))); } catch (e) {}   // 닉네임 다시 쓸 수 있게
       await this.kakaoLogout();
       try { await this.m.deleteUser(u); }   // 로그인한 지 오래되면 requires-recent-login → 데이터는 이미 지웠으니 로그아웃만
@@ -4554,7 +4616,7 @@ async function pickPhoto(input) {
   showLoading(true);
   try {
     draftPhoto = await resizePhoto(file, 256);
-    draftThumb = await resizePhoto(file, 64);
+    draftThumb = await resizePhoto(file, 56, .7);   // v11.122: 댓글마다 들어가는 작은 사진 — 더 가볍게
     draftAvatar = 'photo';
   } catch (e) { showLoading(false); showToast('이 사진은 열 수 없어요. 다른 사진을 골라 주세요.'); input.value = ''; return; }
   /* v11.78: 고르면 바로 프로필 사진으로 저장 */
@@ -5747,9 +5809,9 @@ const ServerBoard = {
              at: x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : Date.now(), likes: x.likeCount || 0, liked: lb.includes(this.uid),
              mine: x.authorUid === this.uid, hidden: !!x.hidden, edited: !!x.editedAt, reportedByMe: (x.reportedBy || []).includes(this.uid) };
   },
-  watch(cb) {
+  watch(cb, n = BOARD_PAGE) {   // v11.122: 최신 20개씩 (전에는 100개)
     const { collection, query, orderBy, limit, onSnapshot } = this.fs;
-    return onSnapshot(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(100)), snap => cb(snap.docs.map(d => this.norm(d))), e => cb(null, e));
+    return onSnapshot(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(n)), snap => cb(snap.docs.map(d => this.norm(d)), null, snap.size), e => cb(null, e));
   },
   async get(id) { const { doc, getDoc } = this.fs; const d = await getDoc(doc(this.db, 'posts', id)); return d.exists() ? this.norm(d) : null; },
   async myActivity() {
@@ -5763,10 +5825,12 @@ const ServerBoard = {
   },
   async latest() { const { collection, query, orderBy, limit, getDocs } = this.fs; const snap = await withTimeout(getDocs(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(10))), 10000, 'firestore/timeout'); return snap.docs.map(d => this.norm(d)); },
   async add(text, author) {
-    const { collection, doc, setDoc, serverTimestamp } = this.fs;
-    const ref = doc(collection(this.db, 'posts'));
-    await setDoc(ref, { text, authorName: author, authorAvatar: (authUser && authUser.avatar) || '', authorPhoto: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: this.uid,
-                        createdAt: serverTimestamp(), likeCount: 0, likedBy: [], reportCount: 0, hidden: false });
+    const { collection, doc, serverTimestamp, writeBatch } = this.fs;
+    const ref = doc(collection(this.db, 'posts')), batch = writeBatch(this.db);
+    batch.set(ref, { text, authorName: author, authorAvatar: (authUser && authUser.avatar) || '', authorPhoto: (authUser && authUser.avatar === 'photo' && authUser.photoThumb) || '', authorUid: this.uid,
+                     createdAt: serverTimestamp(), likeCount: 0, likedBy: [], reportCount: 0, hidden: false });
+    batch.set(doc(this.db, 'rate', this.uid), { last: serverTimestamp() });   // v11.122: 도배 막기
+    await batch.commit();
     return ref.id;
   },
   async edit(pp, text) { const { doc, updateDoc, serverTimestamp } = this.fs; await updateDoc(doc(this.db, 'posts', pp.id), { text, editedAt: serverTimestamp() }); },
@@ -5801,15 +5865,29 @@ function openBoard() {
   if (needOnline()) return;
   triggerHaptic(); closeModal();
   const pg = document.getElementById('boardPage'); pg.classList.add('open');
-  boardLoaded = boardLoaded && boardPosts.length > 0; boardErr = false; renderBoard();
-  if (boardUnsub) { try { boardUnsub(); } catch (e) {} }
+  boardLoaded = boardLoaded && boardPosts.length > 0; boardErr = false; boardLimit = BOARD_PAGE; renderBoard();
+  startBoardWatch();
+}
+/* v11.122: 요금 줄이기 — 게시글은 최신 20개씩, 댓글 수는 화면에 받은 글만 하나씩 셈 (전에는 모든 글귀·게시글의 기록을 통째로 읽음) */
+let boardLimit = 20, boardHasMore = false;
+function startBoardWatch() {
+  if (boardUnsub) { try { boardUnsub(); } catch (e) {} boardUnsub = null; }
   try {
-    boardUnsub = getBoard().watch((list, err) => {
+    boardUnsub = getBoard().watch((list, err, size) => {
       if (!list) { boardErr = true; console.warn('[글자국] 게시판 불러오기 실패', err && err.code); renderBoard(); return; }
-      boardErr = false; boardLoaded = true; boardPosts = list.filter(isVisible); renderBoard();
-    });
+      boardErr = false; boardLoaded = true; boardPosts = list.filter(isVisible);
+      boardHasMore = isServer() && (size != null ? size : list.length) >= boardLimit;
+      renderBoard();
+      if (isServer()) Promise.all(boardPosts.map(pp => refreshCountFor('p_' + pp.id, false))).then(renderBoard).catch(() => {});
+    }, boardLimit);
   } catch (e) { boardErr = true; renderBoard(); }
-  if (isServer()) Community.counts().then(o => { Object.keys(o).forEach(k => { if (k.startsWith('p_')) commentCounts[k] = o[k]; }); renderBoard(); }).catch(() => {});
+}
+function loadMorePosts() {
+  if (needOnline()) return;
+  triggerHaptic();
+  boardLimit += BOARD_PAGE;
+  const btn = document.getElementById('boardMore'); if (btn) { btn.disabled = true; btn.innerText = '불러오는 중…'; }
+  startBoardWatch();
 }
 function closeBoard() {
   closeBoardCompose(); closeMemoConfirm();
@@ -5836,7 +5914,7 @@ function renderBoard() {
       <div class="bp-text" onclick="openPostComments('${pp.id}')">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
-  }).join('');
+  }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '글 더 보기' : '이전 글 더 보기'}</button>` : '');
   box.scrollTop = st;
 }
 async function openPostComments(id) {
@@ -5896,7 +5974,7 @@ async function submitPost() {
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
     showToast('글이 등록되었어요 📝');
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
-  } catch (e) { showToast('등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
+  } catch (e) { showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();
 }
 function boardMenu(html) {
@@ -6257,7 +6335,7 @@ function gpPick(e) { triggerHaptic(); gp.avatar = e; renderProfileStep(document.
 async function gpPhoto(input) {
   const file = input.src || (input.files && input.files[0]); if (!file) return;
   if (file.type && !/^image\//.test(file.type)) { showToast('사진 파일만 고를 수 있어요.'); return; }
-  try { gp.photo = await resizePhoto(file, 256); gp.thumb = await resizePhoto(file, 64); gp.avatar = 'photo'; renderProfileStep(document.getElementById('introGate')); }
+  try { gp.photo = await resizePhoto(file, 256); gp.thumb = await resizePhoto(file, 56, .7); gp.avatar = 'photo'; renderProfileStep(document.getElementById('introGate')); }
   catch (e) { showToast('이 사진은 열 수 없어요. 다른 사진을 골라 주세요.'); input.value = ''; }
 }
 async function gpSubmit() {

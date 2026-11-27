@@ -15,7 +15,7 @@ call npm install
 cd /d "%~dp0"
 echo.
 echo [4/4] 서버에 올리는 중... (3~5분)
-call firebase deploy --only functions,firestore:rules,hosting --force
+call firebase deploy --only functions,firestore:rules,firestore:indexes,hosting --force
 echo.
 echo 위에 "Deploy complete!" 가 보이면 성공이에요. 이 창을 캡처해서 Claude에게 보내주세요.
 pause

@@ -1,5 +1,5 @@
 rules_version = '2';
-// 글자국 댓글 커뮤니티 보안 규칙 (v11.114 — 자유게시판 추가 / v11.104 — 댓글 수정, 1인 1신고, 닉네임 중복 방지, 운영자 신고 관리)
+// 글자국 댓글 커뮤니티 보안 규칙 (v11.122 — 글쓰기는 구글·카카오 로그인한 사람만, 한 사람당 10초에 1개 / v11.114 — 자유게시판 추가 / v11.104 — 댓글 수정, 1인 1신고, 닉네임 중복 방지, 운영자 신고 관리)
 // Firebase 콘솔 → Firestore Database → 규칙 탭에 전체를 붙여넣고 [게시]
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -7,6 +7,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     // v11.104: 운영자 = admins/{uid} 문서가 있는 사람 (Firebase 콘솔에서 직접 만듦)
     function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    // v11.122: 글(댓글·게시글)은 익명이 아닌 진짜 로그인(구글·카카오)만 쓸 수 있음
+    function realUser() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    // v11.122: 글을 쓸 때 rate/{내 ID}의 시각도 같이 바꿔야 함 → 아래 rate 규칙이 10초 간격을 확인 (도배·요금 폭탄 막기)
+    function paced() { return getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.last == request.time; }
 
     // ---------- 댓글 ----------
     match /comments/{commentId} {
@@ -14,7 +18,7 @@ service cloud.firestore {
       allow read: if true;
 
       // 쓰기: 로그인(익명 포함)한 본인 이름으로만, 200자 이하, 처음 값은 0/빈 값
-      allow create: if signedIn()
+      allow create: if realUser() && paced()
         && request.resource.data.keys().hasOnly(['quoteId','text','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden','parentId'])
         && (!('parentId' in request.resource.data) || (request.resource.data.parentId is string && request.resource.data.parentId.size() > 0 && request.resource.data.parentId.size() <= 64))
         && request.resource.data.authorUid == request.auth.uid
@@ -76,7 +80,7 @@ service cloud.firestore {
     // ---------- v11.114: 자유게시판 글 ----------
     match /posts/{postId} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if realUser() && paced()
         && request.resource.data.keys().hasOnly(['text','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden'])
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.text is string
@@ -160,6 +164,18 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       allow list, write: if false;
+    }
+
+    // ---------- v11.122: 글쓰기 간격 (문서 이름 = 내 ID, last = 마지막으로 글 쓴 시각) ----------
+    match /rate/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if false;
+      allow create: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time;
+      allow update: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last']) && request.resource.data.last == request.time
+        && request.time > resource.data.last + duration.value(10, 's');
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     // ---------- 명언별 댓글 수 ----------

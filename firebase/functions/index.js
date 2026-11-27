@@ -69,6 +69,7 @@ exports.deleteAccount = onCall({ region: REGION }, async (req) => {
   }
   w.delete(db.doc(`users/${uid}`));
   w.delete(db.doc(`pushTokens/${uid}`));
+  w.delete(db.doc(`rate/${uid}`));   // v11.122: 글쓰기 간격 기록
   await w.close();
 
   // 5) 로그인 계정 삭제
