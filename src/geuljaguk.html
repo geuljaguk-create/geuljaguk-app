@@ -1396,6 +1396,16 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-send{border:none;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:700;font-size:.95rem;border-radius:999px;padding:10px 22px;cursor:pointer}
 .bp-send:disabled{opacity:.45}
 .board-page .memo-confirm{position:fixed;inset:0;border-radius:0;z-index:256}
+/* v11.126: 슬라이드 보기에서 연 댓글 창 — 아래 절반, 명언 상자 없음, 뒤를 어둡게 가리지 않음 */
+.comment-sheet.half{height:52vh;height:52dvh}
+.comment-sheet.half .sheet-quote{display:none}
+.sheet-overlay.clear{background:transparent}
+.pv.with-sheet .pv-track{overflow:hidden}
+.pv.with-sheet .pv-slide{align-items:flex-start;padding-bottom:calc(52dvh + 8px)}
+.pv.with-sheet .pv-card{max-height:100%;padding:20px 18px 12px}
+.pv.with-sheet .pv-actions,.pv.with-sheet .pv-meta,.pv.with-sheet .pv-hint{display:none}
+.pv.with-sheet .pv-quote{font-size:1.15rem;line-height:1.7}
+.pv.with-sheet .pv-note{margin-top:10px;max-height:5.2em;overflow:hidden}
 /* v11.125: 나만의 명언 슬라이드 보기 (한 장씩 위로 넘김) */
 .bp-card{cursor:pointer}
 .pv{position:fixed;inset:0;z-index:258;background:#f6f4ee;display:flex;flex-direction:column;animation:pvIn .28s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0px)}
@@ -3875,6 +3885,9 @@ enablePullToClose(document.getElementById('settingsPanel'), () => document.getEl
 function closeComments() {
   closeMemoConfirm(); cancelReply(); stopCommentWatch();
   if (isPostKey(currentCommentQuote)) setTimeout(renderBoard, 50);
+  { const pv = document.getElementById('postViewer'), q = currentCommentQuote;   // v11.126
+    if (pv) { pv.classList.remove('with-sheet'); if (isPostKey(q)) { const pp = findPost(q.slice(2)), sl = pv.querySelector(`.pv-slide[data-pid="${q.slice(2)}"]`); if (pp && sl) sl.outerHTML = pvSlideHTML(pp); } } }
+  setTimeout(() => { document.getElementById('commentSheet').classList.remove('half'); document.getElementById('commentOverlay').classList.remove('clear'); }, 320);
   document.getElementById('commentOverlay').classList.remove('show');
   document.getElementById('commentSheet').classList.remove('open');
   document.getElementById('commentInput').blur();
@@ -6072,6 +6085,15 @@ function closePostViewer(now) {
 async function openPostComments(id) {
   let pp = findPost(id);
   if (!pp) { try { pp = await getBoard().get(id); } catch (e) {} if (!pp) { showToast('삭제된 명언이에요.'); return; } boardPosts = boardPosts.filter(x => x.id !== id).concat(pp); }
+  /* v11.126: 슬라이드 보기에서 댓글을 열면 명언은 위에 그대로 보이고, 댓글 창은 아래 절반에서 열림 (위쪽 명언 상자 없음) */
+  const pv = document.getElementById('postViewer');
+  if (pv) {
+    pv.classList.add('with-sheet');
+    document.getElementById('commentSheet').classList.add('half');
+    document.getElementById('commentOverlay').classList.add('clear');
+    const sl = pv.querySelector(`.pv-slide[data-pid="${id}"]`), tr = document.getElementById('pvTrack');
+    if (sl && tr) tr.scrollTop = sl.offsetTop;
+  }
   openComments('p_' + id);
 }
 async function likePost(id) {
