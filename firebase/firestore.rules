@@ -12,6 +12,11 @@ service cloud.firestore {
     // v11.122: 글을 쓸 때 rate/{내 ID}의 시각도 같이 바꿔야 함 → 아래 rate 규칙이 10초 간격을 확인 (도배·요금 폭탄 막기)
     function paced() { return getAfter(/databases/$(database)/documents/rate/$(request.auth.uid)).data.last == request.time; }
     // v11.125: 나만의 명언은 하루(한국 시간) 한 번 — 쓸 때 postDay/{내 ID}의 시각도 같이 바꿔야 하고, 아래 규칙이 날짜가 바뀌었는지 확인
+    // v11.152: 운영자가 글쓰기를 멈춘 사람(muted/{uid}, until 시각 전)은 댓글·명언을 쓸 수 없음
+    function notMuted() {
+      let m = /databases/$(database)/documents/muted/$(request.auth.uid);
+      return !exists(m) || get(m).data.until < request.time;
+    }
     function daily() { return getAfter(/databases/$(database)/documents/postDay/$(request.auth.uid)).data.last == request.time; }
 
     // ---------- 댓글 ----------
@@ -20,7 +25,7 @@ service cloud.firestore {
       allow read: if true;
 
       // 쓰기: 로그인(익명 포함)한 본인 이름으로만, 200자 이하, 처음 값은 0/빈 값
-      allow create: if realUser() && paced()
+      allow create: if realUser() && paced() && notMuted()
         && request.resource.data.keys().hasOnly(['quoteId','text','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden','parentId'])
         && (!('parentId' in request.resource.data) || (request.resource.data.parentId is string && request.resource.data.parentId.size() > 0 && request.resource.data.parentId.size() <= 64))
         && request.resource.data.authorUid == request.auth.uid
@@ -82,7 +87,7 @@ service cloud.firestore {
     // ---------- v11.114: 자유게시판 글 → v11.124: '나만의 명언' (text = 명언, by = 누가 한 말, note = 명언에 대한 이야기) ----------
     match /posts/{postId} {
       allow read: if true;
-      allow create: if realUser() && paced()
+      allow create: if realUser() && paced() && notMuted()
         && daily()
         && request.resource.data.keys().hasOnly(['text','by','note','authorName','authorAvatar','authorPhoto','authorUid','createdAt','likeCount','likedBy','reportCount','hidden'])
         && postExtrasOk(request.resource.data)
@@ -204,9 +209,19 @@ service cloud.firestore {
     // ---------- v11.130: 운영자 설정 — config/badwords(추가 금칙어), config/pick(오늘의 추천 명언) ----------
     match /config/{id} {
       allow read: if true;
-      allow write: if isAdmin() && id in ['badwords', 'pick']
+      allow write: if isAdmin() && id in ['badwords', 'pick', 'notice']
+        && (id != 'notice' || (request.resource.data.items is list && request.resource.data.items.size() <= 20))
         && (id != 'badwords' || (request.resource.data.words is list && request.resource.data.words.size() <= 500))
         && (id != 'pick' || (request.resource.data.postId is string && request.resource.data.postId.size() <= 40));
+    }
+    // ---------- v11.152: 글쓰기 정지 — 운영자만 걸고 풀기, 본인은 내 정지 기간만 읽기 ----------
+    match /muted/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && request.resource.data.until is timestamp
+        && request.resource.data.name is string && request.resource.data.name.size() <= 12
+        && request.resource.data.by == request.auth.uid;
+      allow delete: if isAdmin();
     }
     // ---------- v11.130: 운영자 처리 기록 (운영자만 쓰고 봄, 고치거나 지울 수 없음) ----------
     match /adminLog/{id} {

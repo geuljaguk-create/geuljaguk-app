@@ -1327,6 +1327,15 @@ body.share-view .quote-box.has-guide{padding-bottom:32px!important}
 .adm-stat-v{font-size:1.6rem;font-weight:800;color:#1d2a22;margin-top:2px;font-variant-numeric:tabular-nums}
 .adm-stat-s{font-size:.74rem;color:#94a3b8;margin-top:2px}
 .adm-refresh{display:block;width:100%;margin-top:10px;height:44px;border-radius:12px;border:1px solid #d8e0da;background:#fff;color:#2e4a3b;font-family:inherit;font-weight:700;font-size:.92rem;cursor:pointer}
+.notice-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#e5484d;margin-left:6px;vertical-align:middle}
+.notice-item{padding:14px 2px;border-bottom:1px solid #eef0ed}
+.notice-t{font-weight:800;font-size:1.02rem;color:#1d2a22}
+.notice-d{font-size:.78rem;color:#94a3b8;margin:2px 0 6px}
+.notice-b{font-size:.95rem;line-height:1.7;color:#334155;white-space:pre-line}
+.adm-notice-b{resize:none;margin-top:8px;font-family:inherit;line-height:1.6}
+.adm-notice-go{width:100%;margin:8px 0 14px}
+.memo-confirm.adm-confirm{position:fixed;inset:0;border-radius:0;z-index:400}
+.adm-confirm p{word-break:keep-all}
 .adm-add{display:flex;gap:8px;align-items:center;margin:10px 0}
 .adm-add .login-input{flex:1;min-width:0;margin:0}
 .adm-add .login-submit{width:auto;padding:0 18px;margin:0;height:46px}
@@ -3852,6 +3861,7 @@ async function initCommunityRun() {
   await refreshCommentCounts();
   await renderTopComment();
   syncBadWords();   // v11.130: 운영자가 추가한 금칙어
+  syncNotices();    // v11.152: 운영자 공지 (하루 한 번)
 }
 /* v11.101: 댓글 수 오류 수정 — 따로 더하고 빼 두던 숫자(quoteStats)는 어긋날 수 있어서,
    서버 모드에서는 화면에 보이는 글귀마다 실제 댓글(숨김 제외)을 세어서 보여줌 */
@@ -4182,7 +4192,7 @@ async function submitComment() {
     showToast(wasReply ? '답글을 남겼어요 💬' : '댓글이 등록되었어요 💬');
     renderTopComment();
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }   // v11.111: 첫 댓글 뒤 알림 권한
-  } catch (e) { showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
+  } catch (e) { const mm = /permission/i.test(errCode(e)) ? await mutedMsg() : ''; if (mm) { showToast(mm); sending = false; onCommentInput(input); return; } showToast(/permission/i.test(errCode(e)) ? '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.' : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   sending = false; onCommentInput(input);
 }
 const findComment = id => commentCache.find(c => c.id === id);
@@ -4663,6 +4673,14 @@ function gateError(msg, code = '') {
 /* 서버가 끝내 답하지 않으면 멈추지 않도록 시간 제한 */
 const withTimeout = (p, ms, code) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code, message: code }), ms))]);
 const errCode = e => { const c = (e && (e.code || e.message)) || String(e || ''); return String(c).slice(0, 80); };
+/* v11.152: 운영자가 글쓰기를 멈춘 경우 안내 (쓰기 실패 → 내 muted 문서 확인) */
+async function mutedMsg() {
+  if (!isServer()) return '';
+  try { const { doc, getDoc } = ServerStore.fs; const d = await getDoc(doc(ServerStore.db, 'muted', ServerStore.uid)); if (!d.exists()) return '';
+    const u = d.data().until && d.data().until.toMillis ? d.data().until.toMillis() : 0; if (u < Date.now()) return '';
+    return u > Date.now() + 3650 * 864e5 ? '운영 원칙에 따라 글쓰기가 멈춘 계정이에요.' : `운영 원칙에 따라 ${new Date(u).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}까지 글을 쓸 수 없어요.`;
+  } catch (e) { return ''; }
+}
 const authErr = e => AUTH_ERRORS[e && e.code] || `로그인하지 못했어요. (${errCode(e)})`;
 let lastServerErr = '';
 
@@ -5112,12 +5130,24 @@ const listItem = (f, extra = '') => `
   </div>`;
 const emptyItem = msg => `<div class='modal-list-item' style='cursor:default;justify-content:center;text-align:center;padding:24px 0;'><div>${msg}</div></div>`;   // 안쪽 div로 감싸 줄바꿈이 제대로 되도록
 
-function openNoticeModal() {
+/* v11.152: 공지사항은 운영자가 앱에서 올림(config/notice). 하루 한 번만 받아 둠 */
+let noticeCache = lsGet('noticeCache', []);
+async function syncNotices(force) {
+  if (!force && localStorage.getItem('noticeDay') === kstDay(Date.now())) return;
+  try { noticeCache = await AdminOps.getNotices(); lsSet('noticeCache', noticeCache); localStorage.setItem('noticeDay', kstDay(Date.now())); } catch (e) {}
+}
+const hasNewNotice = () => noticeCache.length > 0 && (noticeCache[0].at || 0) > (+localStorage.getItem('noticeSeenAt') || 0);
+async function openNoticeModal() {
   if (needOnline()) return;
   triggerHaptic(); prepModal("공지사항");
-  /* v11.11: 지난 업데이트 공지는 모두 삭제. 새 공지가 생기면 여기에 추가 */
-  document.getElementById('modalContent').innerHTML = `<div class="notice-empty">아직 공지사항이 없어요.</div>`;
-  showModalElement();
+  const draw = () => {
+    document.getElementById('modalContent').innerHTML = noticeCache.length
+      ? noticeCache.map(n => `<div class="notice-item"><div class="notice-t">${escapeHTML(n.title)}</div><div class="notice-d">${new Date(n.at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</div>${n.body ? `<div class="notice-b">${escapeHTML(n.body)}</div>` : ''}</div>`).join('')
+      : `<div class="notice-empty">아직 공지사항이 없어요.</div>`;
+  };
+  draw(); showModalElement();
+  await syncNotices(true); draw();
+  if (noticeCache[0]) localStorage.setItem('noticeSeenAt', String(noticeCache[0].at || 0));
 }
 /* v11.103: 글자국 소개 (이용 팁 맨 위 · 홈 화면 아이콘을 누르면 단독으로) */
 function appIntroHTML() {
@@ -5320,7 +5350,7 @@ function settingsMainHTML() {
   return `
     <div class="settings-group">
       <div class="settings-nav-row" onclick="openNoticeModal()">
-        <span class="nav-icon">📢</span><span class="nav-label">공지사항</span>${CHEVRON}
+        <span class="nav-icon">📢</span><span class="nav-label">공지사항${hasNewNotice() ? '<i class="notice-dot" aria-label="새 공지"></i>' : ''}</span>${CHEVRON}
       </div>
     </div>
     <div class="settings-group-title">알림</div>
@@ -5428,6 +5458,49 @@ const AdminOps = {
       await addDoc(collection(this.db, 'adminLog'), { ...item, by: ServerStore.uid, byName: (authUser && authUser.name) || '', at: serverTimestamp() });
     } catch (e) { console.warn('[글자국] 처리 기록 실패', e && e.code); }
   },
+  /* v11.152: 공지사항 — config/notice {items:[{id,title,body,at}]} (최신 20개) */
+  async getNotices() {
+    if (!isServer()) return lsGet('adminNotices', []);
+    const { doc, getDoc } = this.fs; const d = await withTimeout(getDoc(doc(this.db, 'config', 'notice')), 10000, 'firestore/timeout');
+    return d.exists() && Array.isArray(d.data().items) ? d.data().items : [];
+  },
+  async setNotices(items) {
+    items = items.slice(0, 20);
+    if (!isServer()) { lsSet('adminNotices', items); return; }
+    const { doc, setDoc, serverTimestamp } = this.fs; await setDoc(doc(this.db, 'config', 'notice'), { items, updatedAt: serverTimestamp() });
+  },
+  /* v11.152: 최근에 올라온 명언·댓글 모아 보기 */
+  async recent() {
+    if (!isServer()) {
+      const ps = lsGet('boardPosts', []).slice().sort((x, y) => y.at - x.at).slice(0, 15).map(x => ({ kind: 'post', id: x.id, text: x.text, author: x.author, uid: x.authorUid, at: x.at }));
+      const cs = LocalStore.all().slice().sort((x, y) => y.at - x.at).slice(0, 20).map(x => ({ kind: 'comment', id: x.id, quoteId: x.quoteId, text: x.text, author: x.author, uid: x.authorUid || '', at: x.at }));
+      return ps.concat(cs).sort((x, y) => y.at - x.at);
+    }
+    const { collection, query, orderBy, limit, getDocs } = this.fs, ms = t => t && t.toMillis ? t.toMillis() : Date.now();
+    const [ps, cs] = await Promise.all([
+      withTimeout(getDocs(query(collection(this.db, 'posts'), orderBy('createdAt', 'desc'), limit(15))), 10000, 'firestore/timeout'),
+      withTimeout(getDocs(query(collection(this.db, 'comments'), orderBy('createdAt', 'desc'), limit(20))), 10000, 'firestore/timeout')]);
+    return ps.docs.map(d => { const x = d.data(); return { kind: 'post', id: d.id, text: x.text, author: x.authorName, uid: x.authorUid, at: ms(x.createdAt) }; })
+      .concat(cs.docs.map(d => { const x = d.data(); return { kind: 'comment', id: d.id, quoteId: x.quoteId, text: x.text, author: x.authorName, uid: x.authorUid, at: ms(x.createdAt) }; }))
+      .sort((x, y) => y.at - x.at);
+  },
+  /* v11.152: 글쓰기 정지 — muted/{uid} {name, until, by, at}. 보안 규칙이 정지 기간 동안 댓글·명언 쓰기를 막음 */
+  async mutes() {
+    if (!isServer()) return lsGet('adminMutes', []);
+    const { collection, getDocs } = this.fs;
+    const snap = await withTimeout(getDocs(collection(this.db, 'muted')), 10000, 'firestore/timeout');
+    return snap.docs.map(d => { const x = d.data(); return { uid: d.id, name: x.name || '', until: x.until && x.until.toMillis ? x.until.toMillis() : 0 }; }).filter(x => x.until > Date.now()).sort((x, y) => x.until - y.until);
+  },
+  async mute(uid, name, days) {
+    const until = Date.now() + days * 864e5;
+    if (!isServer()) { lsSet('adminMutes', lsGet('adminMutes', []).filter(x => x.uid !== uid).concat([{ uid, name, until }])); return; }
+    const { doc, setDoc, serverTimestamp, Timestamp } = this.fs;
+    await setDoc(doc(this.db, 'muted', uid), { name: String(name || '').slice(0, 12), until: Timestamp.fromMillis(until), by: ServerStore.uid, at: serverTimestamp() });
+  },
+  async unmute(uid) {
+    if (!isServer()) { lsSet('adminMutes', lsGet('adminMutes', []).filter(x => x.uid !== uid)); return; }
+    const { doc, deleteDoc } = this.fs; await deleteDoc(doc(this.db, 'muted', uid));
+  },
   async logs() {
     if (!isServer()) return lsGet('adminLog', []);
     const { collection, query, orderBy, limit, getDocs } = this.fs;
@@ -5442,7 +5515,7 @@ async function syncBadWords() {
   try { BAD_EXTRA = (await AdminOps.getWords()).map(w => String(w).toLowerCase()); localStorage.setItem('badWordsExtra', JSON.stringify(BAD_EXTRA)); localStorage.setItem('badWordsDay', today); } catch (e) {}
 }
 let adminTab = 'today', adminData = {};
-const ADMIN_TABS = [['today', '📊 오늘'], ['reports', '🚨 신고'], ['words', '🚫 금칙어'], ['pick', '📌 추천'], ['logs', '📜 기록']];
+const ADMIN_TABS = [['today', '📊 오늘'], ['recent', '🆕 최근 글'], ['reports', '🚨 신고'], ['mutes', '🔇 글쓰기 정지'], ['notice', '📢 공지'], ['words', '🚫 금칙어'], ['pick', '📌 추천'], ['logs', '📜 기록']];   // v11.152: 최근 글·글쓰기 정지·공지 추가
 function setAdminTab(k) { triggerHaptic(); adminTab = k; openSettingsModal(); }
 async function loadAdminTab() {
   const k = adminTab;
@@ -5452,6 +5525,9 @@ async function loadAdminTab() {
     if (k === 'words') adminData.words = await AdminOps.getWords();
     if (k === 'pick') { const pk = await AdminOps.getPick(); adminData.pick = pk; adminData.pickPost = pk && pk.postId && pk.day === kstDay(Date.now()) ? (findPost(pk.postId) || await getBoard().get(pk.postId).catch(() => null)) : null; }
     if (k === 'logs') adminData.logs = await AdminOps.logs();
+    if (k === 'recent') adminData.recent = await AdminOps.recent();
+    if (k === 'mutes') adminData.mutes = await AdminOps.mutes();
+    if (k === 'notice') adminData.notice = await AdminOps.getNotices();
   } catch (e) { adminData[k] = null; showToast(`불러오지 못했어요. (${errCode(e)})`); }
   const el = document.getElementById('adminBody'); if (el && settingsPage === 'admin' && adminTab === k) el.innerHTML = adminTabHTML();
 }
@@ -5483,6 +5559,31 @@ function adminTabHTML() {
       <div class="settings-hint" style="margin-top:6px;">고르는 방법: '명언 제작소' 목록에서 명언을 길게 누르고<br>'📌 오늘의 추천으로 고정'을 누르세요.</div>
       <button type="button" class="adm-refresh" onclick="closeSettingsPanel(); openBoard()">명언 제작소 열기</button>`;
   }
+  if (k === 'recent') {
+    const rs = d || [];
+    return `<div class="settings-hint">최근에 올라온 명언 15개와 댓글 20개예요.<br>문제가 있으면 바로 지우거나 글쓰기를 멈출 수 있어요.</div>
+      <button type="button" class="adm-refresh" onclick="adminData.recent=undefined; openSettingsModal()">↻ 새로 고침</button>
+      ${rs.length ? rs.map((x, i) => `<div class="admin-row" id="admRecent${i}"><div class="admin-meta"><span class="admin-cnt">${x.kind === 'post' ? '📋 명언' : '💬 댓글'}</span><span>${timeAgo(x.at)}</span></div>
+        <div class="admin-text"><b>${escapeHTML(x.author || '익명')}</b> ${escapeHTML(x.text || '')}</div>
+        ${x.kind === 'comment' ? `<div class="admin-quote">${typeof x.quoteId === 'string' && x.quoteId.startsWith('p_') ? '📋 명언 제작소의 댓글' : (getQuote(x.quoteId) ? '“' + escapeHTML(getQuote(x.quoteId).text.replace(/\n/g, ' ').slice(0, 40)) + '”' : '')}</div>` : ''}
+        <div class="admin-btns">${x.uid ? `<button type="button" class="admin-ok" onclick="adminMuteAsk(${i})">🔇 글쓰기 정지</button>` : ''}<button type="button" class="admin-del" onclick="adminRecentDel(${i})">삭제</button></div></div>`).join('') : '<div class="block-empty">아직 올라온 글이 없어요.</div>'}`;
+  }
+  if (k === 'mutes') {
+    const ms = d || [];
+    return `<div class="settings-hint">글쓰기가 멈춘 이용자예요. 기간 동안 댓글·명언을 쓸 수 없고, 읽기는 그대로 돼요.<br>정지는 '🆕 최근 글'에서 글마다 걸 수 있어요.</div>
+      ${ms.length ? ms.map(m => `<div class="admin-row"><div class="admin-meta"><span class="admin-cnt">🔇 ${escapeHTML(m.name || '이름 없음')}</span><span>${m.until > Date.now() + 3650 * 864e5 ? '계속' : new Date(m.until).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + '까지'}</span></div>
+        <div class="admin-btns"><button type="button" class="admin-ok" onclick="adminUnmute('${escapeHTML(m.uid)}', '${escapeHTML((m.name || '').replace(/'/g, ''))}')">정지 풀기</button></div></div>`).join('') : '<div class="block-empty">글쓰기가 멈춘 이용자가 없어요 🙂</div>'}`;
+  }
+  if (k === 'notice') {
+    const ns = d || [];
+    return `<div class="settings-hint">여기 쓴 공지가 모든 이용자의 '공지사항'에 보여요.<br>새 공지가 있으면 설정의 공지사항 옆에 빨간 점이 떠요(하루 안에 적용).</div>
+      <input id="admNoticeT" class="login-input" maxlength="40" placeholder="공지 제목 (40자까지)">
+      <textarea id="admNoticeB" class="login-input adm-notice-b" maxlength="500" rows="4" placeholder="공지 내용 (500자까지)"></textarea>
+      <button type="button" class="login-submit adm-notice-go" onclick="adminAddNotice()">공지 올리기</button>
+      ${ns.length ? ns.map((n, i) => `<div class="admin-row"><div class="admin-meta"><span class="admin-cnt">📢 ${escapeHTML(n.title)}</span><span>${new Date(n.at).toLocaleDateString('ko-KR')}</span></div>
+        <div class="admin-text" style="white-space:pre-line">${escapeHTML(n.body || '')}</div>
+        <div class="admin-btns"><button type="button" class="admin-del" onclick="adminDelNotice(${i})">공지 내리기</button></div></div>`).join('') : '<div class="block-empty">올린 공지가 없어요.</div>'}`;
+  }
   if (k === 'logs') {
     const ls = d || [];
     return `<div class="settings-hint">운영자가 처리한 일이 최근 순서로 남아요.</div>
@@ -5504,6 +5605,52 @@ async function adminRemoveWord(i) {
   ws.splice(i, 1);
   try { await AdminOps.setWords(ws); adminData.words = ws; BAD_EXTRA = ws; localStorage.setItem('badWordsExtra', JSON.stringify(ws)); AdminOps.log('금칙어 삭제', w); triggerHaptic(); openSettingsModal(); }
   catch (e) { showToast(`저장하지 못했어요. (${errCode(e)})`); }
+}
+/* v11.152: 최근 글 삭제 · 글쓰기 정지 · 공지 */
+async function adminRecentDel(i) {
+  const x = (adminData.recent || [])[i]; if (!x) return;
+  triggerHaptic();
+  const key = 'r' + x.id; if (!(adminArm[key] && Date.now() - adminArm[key] < 3000)) { adminArm[key] = Date.now(); showToast('한 번 더 누르면 삭제돼요.'); return; }
+  try {
+    if (x.kind === 'post') { if (isServer()) await Community.adminDelete({ postId: x.id, exists: true }); else lsSet('boardPosts', lsGet('boardPosts', []).filter(p => p.id !== x.id)); boardPosts = boardPosts.filter(p => p.id !== x.id); }
+    else await Community.adminDelete({ commentId: x.id, quoteId: x.quoteId, exists: true });
+    AdminOps.log(x.kind === 'post' ? '명언 삭제' : '댓글 삭제', `${x.author || '익명'}: ${x.text || ''}`);
+    adminData.recent.splice(i, 1); showToast(x.kind === 'post' ? '명언을 삭제했어요.' : '댓글을 삭제했어요.'); openSettingsModal();
+    renderTopComment(); refreshCommentCounts();
+  } catch (e) { showToast(`삭제하지 못했어요. (${errCode(e)})`); }
+}
+function adminMuteAsk(i) {
+  const x = (adminData.recent || [])[i]; if (!x || !x.uid) return;
+  if (x.uid === (ServerStore.uid || 'local-me')) { showToast('내 계정은 멈출 수 없어요.'); return; }
+  triggerHaptic();
+  document.body.insertAdjacentHTML('beforeend', `<div class="memo-confirm adm-confirm" id="memoConfirm" onclick="if(event.target===this)closeMemoConfirm()"><div class="memo-confirm-box cmenu" role="dialog">
+    <p><b>${escapeHTML(x.author || '이 이용자')}</b> 님의 글쓰기를 얼마나 멈출까요?</p>
+    <div class="cmenu-quote">${escapeHTML(x.text || '')}</div>
+    ${[[1, '하루'], [7, '일주일'], [30, '한 달'], [36500, '계속']].map(([d, l]) => `<button type="button" class="cmenu-btn${d > 30 ? ' cmenu-admin' : ''}" onclick="adminMute('${escapeHTML(x.uid)}', '${escapeHTML((x.author || '').replace(/'/g, ''))}', ${d}, '${l}')">🔇 ${l}</button>`).join('')}
+    <button type="button" class="cmenu-btn cmenu-cancel" onclick="closeMemoConfirm()">취소</button></div></div>`);
+}
+async function adminMute(uid, name, days, label) {
+  closeMemoConfirm();
+  try { await AdminOps.mute(uid, name, days); AdminOps.log('글쓰기 정지', `${name || '이름 없음'} · ${label}`); adminData.mutes = undefined; showToast(`${name || '이용자'} 님의 글쓰기를 ${label === '계속' ? '계속' : label} 멈췄어요.`); }
+  catch (e) { showToast(`정지하지 못했어요. (${errCode(e)})`); }
+}
+async function adminUnmute(uid, name) {
+  try { await AdminOps.unmute(uid); AdminOps.log('정지 풀기', name || '이름 없음'); adminData.mutes = (adminData.mutes || []).filter(m => m.uid !== uid); showToast('정지를 풀었어요.'); openSettingsModal(); }
+  catch (e) { showToast(`풀지 못했어요. (${errCode(e)})`); }
+}
+async function adminAddNotice() {
+  const t = (document.getElementById('admNoticeT').value || '').trim(), b = (document.getElementById('admNoticeB').value || '').trim();
+  if (!t) { showToast('공지 제목을 써 주세요.'); return; }
+  const items = [{ id: Date.now().toString(36), title: t.slice(0, 40), body: b.slice(0, 500), at: Date.now() }].concat(adminData.notice || []);
+  try { await AdminOps.setNotices(items); adminData.notice = items.slice(0, 20); noticeCache = adminData.notice; AdminOps.log('공지 올리기', t); triggerHaptic(); showToast('공지를 올렸어요 📢'); openSettingsModal(); }
+  catch (e) { showToast(`올리지 못했어요. (${errCode(e)})`); }
+}
+async function adminDelNotice(i) {
+  const items = (adminData.notice || []).slice(), n = items[i]; if (!n) return;
+  const key = 'n' + n.id; if (!(adminArm[key] && Date.now() - adminArm[key] < 3000)) { adminArm[key] = Date.now(); showToast('한 번 더 누르면 공지를 내려요.'); return; }
+  items.splice(i, 1);
+  try { await AdminOps.setNotices(items); adminData.notice = items; noticeCache = items; AdminOps.log('공지 내리기', n.title); showToast('공지를 내렸어요.'); openSettingsModal(); }
+  catch (e) { showToast(`내리지 못했어요. (${errCode(e)})`); }
 }
 async function adminSetPick(postId) {
   closeMemoConfirm();
@@ -6467,7 +6614,7 @@ async function submitPost() {
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
     showToast('명언이 등록되었어요 📝');
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
-  } catch (e) { showToast(/permission/i.test(errCode(e)) ? (await postedToday() ? DAILY_MSG : '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.') : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
+  } catch (e) { const mm = /permission/i.test(errCode(e)) ? await mutedMsg() : ''; if (mm) { showToast(mm); boardSending = false; onBoardInput(); return; } showToast(/permission/i.test(errCode(e)) ? (await postedToday() ? DAILY_MSG : '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.') : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();
 }
 function boardMenu(html) {
