@@ -5,5 +5,5 @@
     <string name="w_quote_small">오늘의 명언 (작게)</string>
     <string name="w_quote_wide">오늘의 명언 (넓게)</string>
     <string name="w_line_desc">아침·점심·저녁마다 바뀌는 짧은 인사말을 보여줘요</string>
-    <string name="w_quote_desc">매일 바뀌는 명언과 지은이를 보여줘요. 누르면 그 명언으로 가요</string>
+    <string name="w_quote_desc">매일 바뀌는 명언을 보여줘요.</string>
 </resources>
