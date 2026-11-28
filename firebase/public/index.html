@@ -5752,7 +5752,8 @@ function openShareModal(id) {
 async function shareSystem(id) {
   triggerHaptic();
   const q = getQuote(id); if (!q) return;
-  const text = shareText(q);
+  const link = shareLink(q);
+  const text = link || shareText(q);   // v11.133: 카톡·문자로 보낼 때는 링크만 보냄(명언은 링크 미리보기 카드에 나옴). 링크가 없을 때만 명언 글로 보냄
   try {
     const CapShare = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;  // npm i @capacitor/share 권장
     if (CapShare) await CapShare.share({ title: '글자국', text });
