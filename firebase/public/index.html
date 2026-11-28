@@ -1406,6 +1406,13 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-back{width:40px;height:40px;border:none;background:none;color:#1d2a22;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;flex:none}
 .bp-title{font-size:1.15rem;font-weight:800;flex:1;letter-spacing:-.01em}
 .bp-sort{margin:0!important;padding:0!important}
+.bp-view{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:1px solid #d5dbd6;background:#fff;color:#2e4a3b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.bp-view svg{fill:none;stroke:currentColor;stroke-width:1.9}
+#boardList.one-col .nw-grid{grid-template-columns:1fr;gap:20px}
+#boardList.one-col .bp-card.nw-note{min-height:0;padding:22px 16px 12px;transform:rotate(calc(var(--tilt,0deg) * .5))}
+#boardList.one-col .nw-text{font-size:1.15rem;line-height:1.7}
+#boardList.one-col .nw-foot{flex-direction:row;align-items:center;justify-content:space-between}
+#boardList.one-col .nw-who{gap:8px;justify-content:flex-start}
 .bp-intro{font-size:.84rem;color:#64748b;padding:0 20px 10px;line-height:1.5}
 .bp-list{flex:1;overflow-y:auto;padding:4px 14px calc(96px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
 .bp-card{background:#fff;border-radius:18px;padding:16px 16px 10px;margin-bottom:10px;box-shadow:0 1px 3px rgba(29,42,34,.06);border:1px solid rgba(29,42,34,.06);position:relative;-webkit-user-select:none;user-select:none}
@@ -1745,6 +1752,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
     <button type="button" class="bp-back" onclick="closeBoard()" aria-label="뒤로"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="bp-title">명언 제작소</div>
     <div class="comment-sort bp-sort" id="boardSort" role="tablist" aria-label="명언 정렬"></div>
+    <button type="button" class="bp-view" id="boardView" onclick="toggleBoardView()"></button>
   </div>
   <div class="bp-list" id="boardList"></div>
   <button type="button" class="bp-write" onclick="openBoardCompose()">✏️ 작성하기</button>
@@ -6428,8 +6436,18 @@ function closeBoard() {
   renderTopComment();
 }
 function setBoardSort(k) { if (k === boardSort) return; triggerHaptic(); boardSort = k; renderBoard(); document.getElementById('boardList').scrollTop = 0; }
+/* v11.154: 쪽지 벽 보기 — 두 줄(two) ↔ 한 줄(one). 버튼 그림은 지금 보기 방식 */
+let boardView = localStorage.getItem('boardView') === 'one' ? 'one' : 'two';
+const VIEW_ICON = { two: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>',
+  one: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="17" height="7" rx="1.6"/></svg>' };
+function toggleBoardView() {
+  triggerHaptic(); boardView = boardView === 'two' ? 'one' : 'two';
+  try { localStorage.setItem('boardView', boardView); } catch (e) {}
+  renderBoard(); const b = document.getElementById('boardList'); if (b) b.scrollTop = 0;
+}
 function renderBoard() {
   const pg = document.getElementById('boardPage'); if (!pg || !pg.classList.contains('open')) return;
+  { const v = document.getElementById('boardView'); if (v) { v.innerHTML = VIEW_ICON[boardView]; v.setAttribute('aria-label', boardView === 'two' ? '두 줄로 보는 중 — 누르면 한 줄로' : '한 줄로 보는 중 — 누르면 두 줄로'); } }
   document.getElementById('boardSort').innerHTML = [['recent', '최신순'], ['likes', '공감순']].map(([k, l]) => `<button type="button" role="tab" aria-selected="${boardSort === k}" class="${boardSort === k ? 'on' : ''}" onclick="setBoardSort('${k}')">${l}</button>`).join('');
   const box = document.getElementById('boardList');
   box.classList.remove('note-wall');
@@ -6441,6 +6459,7 @@ function renderBoard() {
   /* v11.149: 쪽지 벽 — 색깔 쪽지를 두 줄로 붙인 모양. 누르면 크게 보기, 길게 누르면 신고(남의 글) */
   const NOTE_COLORS = ['y', 'gr', 'b', 'p'];
   box.classList.add('note-wall');
+  box.classList.toggle('one-col', boardView === 'one');
   box.innerHTML = '<div class="nw-grid">' + list.map((pp, k) => {
     const col = NOTE_COLORS[(k + (pp.id.charCodeAt(0) || 0)) % NOTE_COLORS.length], tilt = ((pp.id.charCodeAt(pp.id.length - 1) || 0) % 5) - 2;
     return `<div class="bp-card nw-note nw-${col} ${pp.mine ? 'is-mine' : ''}" id="bp-${pp.id}" data-pid="${pp.id}" style="--tilt:${tilt * 0.7}deg" onclick="if(!event.target.closest('button'))openPostViewer('${pp.id}')">
