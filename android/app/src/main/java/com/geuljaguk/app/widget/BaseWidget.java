@@ -13,7 +13,7 @@ import com.geuljaguk.app.MainActivity;
 import com.geuljaguk.app.R;
 import java.util.Calendar;
 
-/** 홈 화면 위젯 공통: '오늘의 글귀'(quoteMode=true) / '오늘의 한 줄'(false) */
+/** 홈 화면 위젯 공통: '오늘의 명언'(quoteMode=true, v11.134 이름 변경) / '오늘의 한 줄'(false) */
 public abstract class BaseWidget extends AppWidgetProvider {
     protected abstract int layout();
     protected abstract boolean quoteMode();
@@ -76,7 +76,7 @@ public abstract class BaseWidget extends AppWidgetProvider {
         if (quoteMode()) {
             WidgetData.Quote q = d.quoteFor(now);
             qid = q.id;
-            v.setTextViewText(R.id.w_label, q.cat.isEmpty() ? "오늘의 글귀" : "오늘의 글귀 · #" + q.cat);
+            v.setTextViewText(R.id.w_label, q.cat.isEmpty() ? "오늘의 명언" : "오늘의 명언 · #" + q.cat);
             v.setTextViewText(R.id.w_text, q.text);
             v.setTextViewText(R.id.w_sub, "- " + q.author + " -");
         } else {
