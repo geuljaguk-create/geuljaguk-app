@@ -82,7 +82,7 @@ public abstract class BaseWidget extends AppWidgetProvider {
         } else {
             String[] r = d.lineFor(now);
             v.setTextViewText(R.id.w_label, r[0] + "의 한 줄");
-            v.setTextViewText(R.id.w_text, r[1]);
+            v.setTextViewText(R.id.w_text, r[1].replace(", ", ",\n"));   // v11.135: 쉼표 뒤에서 줄바꿈 (낱말 중간에서 끊기지 않게)
             v.setTextViewText(R.id.w_sub, "글자국");
         }
         // 누르면 앱 열기 — 글귀 위젯은 그 글귀로 바로 이동

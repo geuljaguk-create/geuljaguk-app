@@ -1,6 +1,6 @@
 # 글자국 — 작업 메모 (Claude용)
 
-- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.134).
+- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.135).
 - 사용자용·운영자용 두 가지를 **항상 같이** 만든다. 차이는 `const ADMIN_BUILD = true/false;` 한 줄뿐이며 `tools/prepare_www.py --admin` 이 바꿔 준다. 원본 HTML은 `false`(사용자용)로 둔다.
 - 배경음악 기능은 v11.123에서 제거했다(음악 탭·설정 줄·이용 팁·음악 파일 삭제, `bgmOn`은 항상 false). 되살리려면 v11.122의 git 기록에서 `bgmdata-*` 블록을 가져온다.
 - 빌드: `npm ci`(postinstall로 patch-package가 카카오 플러그인의 옛 jcenter 저장소를 고침) → `bash tools/build.sh` → `out/글자국-사용자용.apk`, `out/글자국-운영자용.apk`. Android SDK·JDK 21 필요. Claude 작업 공간에서는 gradlew 다운로드가 막혀 `GRADLE=gradle bash tools/build.sh`, Maven Central 429가 나면 몇 번 다시 시도.
@@ -26,3 +26,4 @@
 - v11.132 문구 원칙(사용자 지시): 기존 안내 말투를 해요체로 바꾸지 않는다. **설정이 바뀌는 안내**(배경·글씨·글씨체·알림 켜기/추가/삭제·진동·날씨 문구·글상자·로그인/로그아웃·닉네임·프로필 사진·차단 해제)는 '…되었습니다/했습니다'로 쓴다. 그 밖의 안내·오류는 원래 말투 유지. (v11.131의 해요체 통일은 되돌림) 신고·삭제 문구는 '명언'으로 맞춤, askExactAlarm 삭제.
 - v11.133: '공유하기'(카톡·문자)는 링크만 보낸다(명언은 링크 미리보기 카드에 나옴). '글 복사'는 명언+링크 그대로.
 - v11.134: 위젯 이름 '오늘의 명언 (작게/넓게)', '오늘의 한 줄 (작게/넓게)'(widget_strings.xml), 명언 위젯 윗줄 '오늘의 명언 · #분류'(BaseWidget).
+- v11.135: 위젯 글 줄바꿈 — 4종 모두 lineBreakWordStyle="phrase"(안드로이드 13+, 낱말 중간에서 안 끊김), 작은 위젯 글씨 15sp, 한 줄 위젯은 쉼표 뒤 줄바꿈(BaseWidget).
