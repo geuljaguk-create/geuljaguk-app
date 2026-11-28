@@ -1504,6 +1504,30 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 /* v11.128: 오늘의 한 걸음 — 제목은 그대로(왼쪽), 문장은 가운데 정렬 */
 .interpretation-box .guide-sentence{text-align:center}
 /* v11.128: 쓸 수 없는 글 안내 */
+/* v11.148: 전체 화면 작성 창 (여백 가득) */
+.bp-compose.bp-full{background:#fff;align-items:stretch;padding:0;animation:bpfIn .26s cubic-bezier(.16,1,.3,1)}
+.bp-compose.bp-full.closing{animation:bpfOut .2s ease forwards}
+@keyframes bpfIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes bpfOut{to{opacity:0;transform:translateY(28px)}}
+.bpf{width:100%;max-width:560px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:#fff;padding-top:env(safe-area-inset-top,0px)}
+.bpf-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px}
+.bpf-top b{font-size:1rem;color:#33423a}
+.bpf-cancel{border:0;background:none;font-family:inherit;font-size:1rem;color:#64748b;padding:8px 6px;cursor:pointer}
+.bpf-send{border:0;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:800;font-size:.95rem;border-radius:999px;padding:9px 20px;cursor:pointer}
+.bpf-send:disabled{background:#b7c4bb}
+.bpf-body{flex:1;overflow-y:auto;padding:0 26px calc(30px + env(safe-area-inset-bottom,0px))}
+.bpf-mark{font-family:'Nanum Myeongjo',serif;font-size:4.4rem;line-height:1;color:#dfe7e1;margin:26px 0 -6px -4px;user-select:none}
+.bp-compose.bp-full textarea.bpf-quote,.bp-compose.bp-full textarea.bpf-quote:focus{display:block;max-height:none;border-radius:0;width:100%;box-sizing:border-box;border:0;outline:0;resize:none;background:none;padding:0;font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:1.5rem;line-height:1.7;color:#1d2a22;min-height:120px;overflow:hidden;word-break:keep-all}
+.bpf-quote::placeholder{color:#b8c0bb;font-weight:800}
+.bpf-count{text-align:right;font-size:.8rem;color:#94a3b8;margin:6px 0 4px}
+.bpf-add{display:flex;align-items:center;gap:9px;width:100%;margin-top:18px;padding:16px 0 10px;border:0;border-top:1px solid #e3e6e1;background:none;font-family:inherit;font-size:.98rem;font-weight:700;color:#2e4a3b;cursor:pointer;text-align:left}
+.bpf-add i{display:inline-flex;width:24px;height:24px;border-radius:50%;border:1.5px solid #2e4a3b;align-items:center;justify-content:center;font-style:normal;font-size:1rem}
+.bpf-tip{font-size:.82rem;color:#94a3b8}
+.bpf-note{margin-top:18px;padding-top:14px;border-top:1px solid #e3e6e1}
+.bpf-note-lab{display:flex;justify-content:space-between;font-size:.9rem;font-weight:700;color:#2e4a3b;margin-bottom:8px}
+.bpf-note-lab small{font-weight:400;color:#94a3b8}
+.bp-compose.bp-full .bpf-note textarea,.bp-compose.bp-full .bpf-note textarea:focus{max-height:none;width:100%;box-sizing:border-box;border:0;outline:0;resize:none;background:#f6f4ee;border-radius:14px;padding:12px 14px;font-family:inherit;font-size:1rem;line-height:1.65;color:#334155;min-height:110px}
+.bp-full .bp-warn{margin:6px 0 0}
 .bp-warn{display:none;white-space:pre-line;font-size:.86rem;line-height:1.5;color:#b5523b;background:#fdf1ee;border-radius:10px;padding:9px 12px;margin:-2px 0 10px}
 .bp-warn.show{display:block}
 .sq-text.sq-post{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem;line-height:1.6;text-align:left}
@@ -6343,22 +6367,33 @@ async function openBoardCompose(editId) {
   if (!editId && !localStorage.getItem('communityTermsAgreed') && !(await askTerms())) return;   // v11.146·147: 작성 창을 열기 전에 이용 규칙부터
   const pp = editId ? findPost(editId) : null; if (editId && (!pp || !pp.mine)) return;
   boardEditId = pp ? pp.id : null;
-  /* v11.124: 아래에서 올라오는 작은 슬라이드 창 — 명언 · 누가 한 말 · 명언에 대한 이야기 */
-  document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="bp-compose" id="bpCompose" onclick="if(event.target===this)closeBoardCompose()">
-    <div class="bp-sheet" role="dialog" aria-label="${pp ? '명언 고치기' : '오늘의 내 명언 쓰기'}">
-      <div class="bp-grab" aria-hidden="true"></div>
-      <div class="bp-compose-head"><b>${pp ? '명언 고치기' : '오늘의 내 명언 쓰기'}</b><button type="button" onclick="closeBoardCompose()" aria-label="닫기">&times;</button></div>
-      <label class="bp-field"><span class="bp-label">명언<small id="bpCount">0/${BOARD_MAX}</small></span>
-        <textarea id="bpText" class="bp-in bp-in-quote" rows="2" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은 나만의 명언을 적어 주세요" oninput="onBoardInput()"></textarea></label>
-      <label class="bp-field"><span class="bp-label">이 명언에 담긴 이야기<small>선택</small></span>
-        <textarea id="bpNote" class="bp-in" rows="3" maxlength="${NOTE_MAX}" placeholder="이 말이 왜 마음에 남았는지 적어 보세요" oninput="onBoardInput()"></textarea></label>
-      <div class="bp-warn" id="bpWarn" role="alert"></div>
-      <button type="button" class="bp-send bp-send-full" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '등록하기'}</button>
+  /* v11.148: 여백 가득한 전체 화면 작성 창 — 큰 따옴표 + 큰 명조 글씨, 이야기는 '더하기'를 눌렀을 때만 */
+  const title = pp ? '명언 고치기' : '오늘의 내 명언';
+  document.getElementById('boardPage').insertAdjacentHTML('beforeend', `<div class="bp-compose bp-full" id="bpCompose">
+    <div class="bpf" role="dialog" aria-label="${title}">
+      <div class="bpf-top"><button type="button" class="bpf-cancel" onclick="closeBoardCompose()">취소</button><b>${title}</b><button type="button" class="bpf-send" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '올리기'}</button></div>
+      <div class="bpf-body">
+        <div class="bpf-mark" aria-hidden="true">“</div>
+        <textarea id="bpText" class="bpf-quote" rows="3" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은&#10;한 문장을&#10;적어 주세요" oninput="onBoardInput()" aria-label="명언"></textarea>
+        <div class="bpf-count" id="bpCount">0/${BOARD_MAX}</div>
+        <div class="bp-warn" id="bpWarn" role="alert"></div>
+        <button type="button" class="bpf-add" id="bpAddNote" onclick="showNoteField()"><i>+</i>이 명언에 담긴 이야기 더하기</button>
+        <div class="bpf-tip" id="bpNoteTip">선택이에요. 쓰지 않아도 올릴 수 있어요.</div>
+        <div class="bpf-note" id="bpNoteWrap" hidden>
+          <div class="bpf-note-lab">이 명언에 담긴 이야기 <small id="bpNoteCount">0/${NOTE_MAX}</small></div>
+          <textarea id="bpNote" rows="4" maxlength="${NOTE_MAX}" placeholder="이 말이 왜 마음에 남았는지 적어 보세요" oninput="onBoardInput()"></textarea>
+        </div>
+      </div>
     </div></div>`);
   const t = document.getElementById('bpText');
-  if (pp) { t.value = pp.text; document.getElementById('bpNote').value = pp.note || ''; }
+  if (pp) { t.value = pp.text; document.getElementById('bpNote').value = pp.note || ''; if (pp.note) showNoteField(true); }
   onBoardInput();
   setTimeout(() => { t.focus(); const n = t.value.length; try { t.setSelectionRange(n, n); } catch (e) {} }, 120);
+}
+function showNoteField(quiet) {
+  const w = document.getElementById('bpNoteWrap'); if (!w) return;
+  w.hidden = false; ['bpAddNote', 'bpNoteTip'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  if (!quiet) { triggerHaptic(); setTimeout(() => { const n = document.getElementById('bpNote'); if (n) n.focus(); }, 60); }
 }
 function closeBoardCompose() {
   const c = document.getElementById('bpCompose'); boardEditId = null; if (!c) return;
@@ -6379,6 +6414,8 @@ function postTextProblem(text, isNote) {
 function onBoardInput() {
   const t = document.getElementById('bpText'); if (!t) return;
   document.getElementById('bpCount').innerText = `${t.value.length}/${BOARD_MAX}`;
+  t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight, 120) + 'px';   // v11.148: 쓰는 만큼 칸이 늘어남
+  { const nc = document.getElementById('bpNoteCount'), nn = document.getElementById('bpNote'); if (nc && nn) nc.innerText = `${nn.value.length}/${NOTE_MAX}`; }
   const n = document.getElementById('bpNote'), w = document.getElementById('bpWarn');
   const msg = postTextProblem(t.value) || (n ? postTextProblem(n.value, true) : '');
   if (w) { w.innerText = msg; w.classList.toggle('show', !!msg); }
