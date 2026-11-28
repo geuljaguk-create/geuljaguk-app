@@ -33,3 +33,4 @@ CLAUDE.md에서 옮겨 온 버전별 기록. 새 기록은 여기 아래에 덧�
 - v11.151: 로그인 화면 두 곳에서 Apple 버튼 제거(Auth.apple 코드는 iOS용으로 남김). 테스트 APK 서명 키 고정(android/test-key/debug.keystore).
 - v11.152 운영자 기능 추가: 🆕 최근 글(명언 15·댓글 20 모아 보기, 바로 삭제), 🔇 글쓰기 정지(muted/{uid} until — 하루·일주일·한 달·계속, 보안 규칙 notMuted()가 댓글·명언 쓰기를 막음, 정지된 사람은 '~까지 글을 쓸 수 없어요' 안내), 📢 공지(config/notice 최대 20개, 모든 앱이 하루 한 번 받아 공지사항에 보여 주고 새 공지면 빨간 점). 규칙 시험 t4.mjs 17개 통과.
 - v11.152 빌드: test77 (versionCode 74).
+- v11.153: compileSdk·targetSdk 35 → 36(Android 16, 플레이 제출 요건). test78 빌드(versionCode 75) — 휴대폰에서 위아래 여백·뒤로 가기 확인 필요.

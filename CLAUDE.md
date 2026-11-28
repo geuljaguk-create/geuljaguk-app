@@ -1,6 +1,6 @@
 # 글자국 — 작업 메모 (Claude용)
 
-- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.152).
+- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.153).
 - **APK·HTML 파일은 사용자가 요청할 때만 만들어 보낸다**(2026-11-28 사용자 지시). 평소 수정은 원본 고치기 → 점검 → 미리보기 업데이트 → git 커밋까지만. versionCode는 APK를 만들 때만 올린다.
 - APK를 만들 때는 사용자용·운영자용 두 가지를 **항상 같이** 만든다. 차이는 `const ADMIN_BUILD = true/false;` 한 줄뿐이며 `tools/prepare_www.py --admin` 이 바꿔 준다. 원본 HTML은 `false`(사용자용)로 둔다.
 - 배경음악 기능은 v11.123에서 제거했다(음악 탭·설정 줄·이용 팁·음악 파일 삭제, `bgmOn`은 항상 false). 되살리려면 v11.122의 git 기록에서 `bgmdata-*` 블록을 가져온다.
@@ -8,6 +8,7 @@
 - 점검: `python3 tools/smoke_test.py` (브라우저 미리보기로 주요 화면 열어 보기).
 - 안드로이드 고유 코드: `android/app/src/main/java/com/geuljaguk/app/` (MainActivity: 카카오 초기화·위젯 새로고침, widget/: 위젯 4종).
 - 위젯 데이터: `android/app/src/main/res/raw/widget_data.json` (시간대별 한 줄 + 글귀). 명언을 바꾸면 이 파일도 같이 갱신해야 한다.
+- 대상 SDK: compileSdk·targetSdk 36(Android 16) — 2026-08-31부터 플레이 제출 필수. 작업 공간엔 platforms;android-36을 sdkmanager로 설치함. 화면 꽉 차기는 capacitor.config의 adjustMarginsForEdgeToEdge "auto"가 처리.
 - 정확한 알람 권한(SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM)은 매니페스트에서 제거 유지 (플레이 정책).
 - 서버 쪽(보안 규칙·함수·웹)을 바꾸면 사용자에게 **Firebase 재배포가 필요하다고 꼭 알린다**.
 - `firebase/public/`은 공유 링크 웹페이지 결과물(웹 앱, 글귀별 q/번호, og 그림, assetlinks). 명언이 바뀌면 `python3 tools/build_web.py`로 다시 만든 뒤 Firebase 배포(그림까지 10분 넘게 걸림). 명언 문장은 그대로이고 화면·안내 글만 바뀌면 `python3 tools/build_web.py --app-only`(웹 앱만). (2026-11-12 복원본 스크립트 — 그림 모양이 예전과 거의 같지만 완전히 같진 않음)
