@@ -4752,7 +4752,6 @@ function settingsLoginHTML() {
     ${hasServerConfig() ? '' : '<div class="login-test-note">서버 연결 전이라 테스트 로그인으로 동작해요.</div>'}
     <button type="button" class="login-btn kakao" onclick="loginWith('kakao')"><span class="lb-ico">💬</span>카카오로 시작하기</button>
     <button type="button" class="login-btn google" onclick="loginWith('google')"><span class="lb-ico g">G</span>Google로 시작하기</button>
-    <button type="button" class="login-btn apple" onclick="loginWith('apple')"><span class="lb-ico"></span>Apple로 시작하기</button>
     <button type="button" class="login-btn email" onclick="toggleEmailForm()"><span class="lb-ico">✉️</span>이메일로 시작하기</button>
     <div id="emailForm" class="email-form" style="display:none;">
       <input type="email" id="loginEmail" class="login-input" placeholder="이메일" autocomplete="email">
@@ -6746,11 +6745,10 @@ function renderGate() {
   const intro = document.getElementById('intro');
   if (needProfile()) { intro.classList.add('gate-profile'); renderProfileStep(g); return; }
   intro.classList.remove('gate-profile');
-  /* v11.71: 로그인 화면(도안 4 '책 표지') — 카카오·구글·애플만 */
+  /* v11.71: 로그인 화면(도안 4 '책 표지') — 카카오·구글 (v11.151: Apple 버튼 뺌 — 안드로이드 출시. iOS 낼 때 Auth.apple() 다시 연결) */
   g.innerHTML = `
     <button type="button" class="gate-btn kakao" onclick="loginWith('kakao')">${K_LOGO}<span>카카오로 시작하기</span></button>
     <button type="button" class="gate-btn google" onclick="loginWith('google')">${G_LOGO}<span>Google로 시작하기</span></button>
-    <button type="button" class="gate-btn apple" onclick="loginWith('apple')">${A_LOGO}<span>Apple로 시작하기</span></button>
     ${hasServerConfig() ? '' : '<div class="gate-test">서버 연결 전이라 테스트 로그인으로 들어가요</div>'}
     <div class="gate-terms">시작하면 이용약관 및 개인정보 처리방침에<br>동의하게 됩니다.</div>`;
 }

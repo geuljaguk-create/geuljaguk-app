@@ -20,6 +20,14 @@ android {
        · 내 컴퓨터: android/keystore.properties (storeFile, storePassword, keyAlias, keyPassword)
        · GitHub 자동 빌드: Secrets 의 GJ_KEYSTORE_BASE64 / GJ_KEYSTORE_PASSWORD / GJ_KEY_ALIAS / GJ_KEY_PASSWORD */
     signingConfigs {
+        /* v11.151: 테스트 APK(assembleDebug) 서명 키 고정 — 작업 공간이 초기화되거나 GitHub 자동 빌드여도 같은 키로 서명해서
+           Firebase(구글 로그인)·카카오에 등록한 지문이 바뀌지 않게 함. 출시용 업로드 키가 아님(비밀번호 android, 공개돼도 출시본과 무관) */
+        debug {
+            storeFile rootProject.file('test-key/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
         release {
             def props = new Properties()
             def f = rootProject.file('keystore.properties')
