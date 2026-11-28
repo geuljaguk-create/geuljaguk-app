@@ -1445,7 +1445,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .pv.with-sheet .pv-card{max-height:100%;padding:20px 18px 12px}
 .pv.with-sheet .pv-actions,.pv.with-sheet .pv-meta,.pv.with-sheet .pv-hint{display:none}
 .pv.with-sheet .pv-quote{font-size:1.15rem;line-height:1.7}
-.pv.with-sheet .pv-note{margin-top:10px;max-height:5.2em;overflow:hidden}
+.pv.with-sheet .pv-note{margin-top:8px;max-height:5.2em;overflow:hidden}
 /* v11.125: 나만의 명언 슬라이드 보기 (한 장씩 위로 넘김) */
 .bp-card{cursor:pointer}
 .pv{position:fixed;inset:0;z-index:258;background:#f6f4ee;display:flex;flex-direction:column;animation:pvIn .28s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0px)}
@@ -1459,7 +1459,9 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .pv-card{width:100%;max-width:520px;background:#fff;border-radius:24px;padding:30px 22px 18px;box-shadow:0 10px 30px rgba(29,42,34,.1);text-align:center;max-height:100%;overflow-y:auto;box-sizing:border-box}
 .pv-quote{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:1.32rem;line-height:1.8;color:#1d2a22;word-break:keep-all;overflow-wrap:anywhere}
 .pv-by{font-family:'Nanum Myeongjo',serif;font-size:.98rem;color:#4f5e55;margin:14px 0 4px}
-.pv-note{margin:16px 0 4px;padding:14px;background:#eef3ef;border:1px solid #dfe8e1;border-radius:14px;font-size:.95rem;line-height:1.7;color:#475569;text-align:left;word-break:keep-all;overflow-wrap:anywhere}
+.pv-slide{flex-direction:column}   /* v11.141: 명언 상자 아래에 이야기 상자 */
+.pv-slide .pv-card{flex:0 1 auto;min-height:0}
+.pv-note{width:100%;max-width:520px;box-sizing:border-box;flex:0 0 auto;max-height:34%;overflow-y:auto;margin:12px 0 0;padding:14px 16px;background:#eef3ef;border:1px solid #dfe8e1;border-radius:14px;font-size:.95rem;line-height:1.7;color:#475569;text-align:left;word-break:keep-all;overflow-wrap:anywhere}
 .pv-meta{font-size:.78rem;color:#94a3b8;margin-top:12px}
 .pv-actions{justify-content:center;margin-top:14px}
 .pv-end{flex-direction:column}
@@ -6250,10 +6252,9 @@ function pvSlideHTML(pp) {
   return `<section class="pv-slide" data-pid="${pp.id}"><div class="pv-card">
     <div class="pv-quote">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
     <div class="pv-by">— ${escapeHTML(pp.author || '익명')} —</div>
-    ${pp.note ? `<div class="pv-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}
     <div class="pv-meta">${timeAgo(pp.at)}${pp.edited ? ' · 수정됨' : ''}</div>
     <div class="bp-actions pv-actions"><button type="button" class="${pp.liked ? 'on' : ''}" id="pvLike-${pp.id}" onclick="pvLike('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
-  </div></section>`;
+  </div>${pp.note ? `<div class="pv-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}</section>`;   // v11.141: 이야기 상자를 명언 상자 아래(밖)로
 }
 function pvOnScroll() {
   const tr = document.getElementById('pvTrack'), c = document.getElementById('pvCount'); if (!tr || !c) return;
