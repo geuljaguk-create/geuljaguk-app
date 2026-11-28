@@ -7,7 +7,7 @@ android {
         applicationId "com.geuljaguk.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 72          // 출시할 때마다 1씩 올리기 (플레이스토어 규칙)
+        versionCode 73          // 출시할 때마다 1씩 올리기 (플레이스토어 규칙)
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
