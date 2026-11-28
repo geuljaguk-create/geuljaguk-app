@@ -1419,6 +1419,13 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bp-send{border:none;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:700;font-size:.95rem;border-radius:999px;padding:10px 22px;cursor:pointer}
 .bp-send:disabled{opacity:.45}
 .board-page .memo-confirm{position:fixed;inset:0;border-radius:0;z-index:256}
+/* v11.143: 오늘의 내 명언 첫 안내 창 */
+.board-intro{position:fixed;inset:0;z-index:257;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(29,42,34,.38);animation:mcIn .2s ease}
+.board-intro-box{width:100%;max-width:340px;background:#fff;border-radius:22px;padding:28px 16px 20px;text-align:center;box-shadow:0 16px 40px rgba(29,42,34,.22)}
+.board-intro-ico{font-size:2.1rem;line-height:1;margin-bottom:10px}
+.board-intro-box h3{margin:0 0 14px;font-size:1.2rem;font-weight:800;color:#2e4a3b}
+.board-intro-box p{margin:0 0 10px;font-size:.96rem;line-height:1.7;color:#334155;word-break:keep-all}
+.board-intro-btn{margin-top:12px;width:100%;padding:14px;border:0;border-radius:14px;background:#2e4a3b;color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer}
 /* v11.127: 긴 문장(띄어쓰기 없는 글 포함)은 칸을 넘지 않고 줄바꿈 — 홈 상자는 3줄까지 보이고 나머지는 … */
 #homeHeader .toc-best .toc-sub.has{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden!important}
 #homeHeader .toc-best .toc-sub.has .tc-text{overflow-wrap:anywhere;word-break:keep-all;max-width:100%}
@@ -6170,6 +6177,23 @@ function openBoard() {
   const pg = document.getElementById('boardPage'); pg.classList.add('open');
   boardLoaded = boardLoaded && boardPosts.length > 0; boardErr = false; boardLimit = BOARD_PAGE; renderBoard();
   startBoardWatch();
+  if (!localStorage.getItem('boardIntroSeen')) showBoardIntro();
+}
+/* v11.143: 오늘의 내 명언을 처음 열 때 한 번만 보이는 안내 창 */
+function showBoardIntro() {
+  const pg = document.getElementById('boardPage'); if (!pg || document.getElementById('boardIntro')) return;
+  pg.insertAdjacentHTML('beforeend', `<div class="board-intro" id="boardIntro" role="dialog" aria-modal="true" aria-labelledby="boardIntroT">
+    <div class="board-intro-box">
+      <div class="board-intro-ico">✍️</div>
+      <h3 id="boardIntroT">오늘의 내 명언</h3>
+      <p>마음에 품은 나만의 명언을<br>모두와 나누고, 함께 이야기하는 곳이에요.</p>
+      <p>나의 이야기도, 다른 사람의 이야기도<br>함께 나누고 들어 볼까요?</p>
+      <button type="button" class="board-intro-btn" onclick="closeBoardIntro()">시작하기</button>
+    </div></div>`);
+}
+function closeBoardIntro() {
+  triggerHaptic(); localStorage.setItem('boardIntroSeen', '1');
+  const el = document.getElementById('boardIntro'); if (el) el.remove();
 }
 /* v11.122: 요금 줄이기 — 게시글은 최신 20개씩, 댓글 수는 화면에 받은 글만 하나씩 셈 (전에는 모든 글귀·게시글의 기록을 통째로 읽음) */
 let boardLimit = 20, boardHasMore = false;
