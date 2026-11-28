@@ -1443,7 +1443,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .pv.with-sheet .pv-card{max-height:100%;padding:20px 18px 12px}
 .pv.with-sheet .pv-actions,.pv.with-sheet .pv-meta,.pv.with-sheet .pv-hint{display:none}
 .pv.with-sheet .pv-quote{font-size:1.15rem;line-height:1.7}
-.pv.with-sheet .pv-note{margin-top:8px;max-height:5.2em;overflow:hidden}
+.pv.with-sheet .pv-note{margin-top:8px;max-height:6.4em;overflow:hidden}
 /* v11.125: 나만의 명언 슬라이드 보기 (한 장씩 위로 넘김) */
 .bp-card{cursor:pointer}
 .pv{position:fixed;inset:0;z-index:258;background:#f6f4ee;display:flex;flex-direction:column;animation:pvIn .28s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0px)}
@@ -1459,7 +1459,11 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .pv-by{font-family:'Nanum Myeongjo',serif;font-size:.98rem;color:#4f5e55;margin:14px 0 4px}
 .pv-slide{flex-direction:column}   /* v11.141: 명언 상자 아래에 이야기 상자 */
 .pv-slide .pv-card{flex:0 1 auto;min-height:0}
-.pv-note{width:100%;max-width:520px;box-sizing:border-box;flex:0 0 auto;max-height:34%;overflow-y:auto;margin:12px 0 0;padding:14px 16px;background:#eef3ef;border:1px solid #dfe8e1;border-radius:14px;font-size:.95rem;line-height:1.7;color:#475569;text-align:left;word-break:keep-all;overflow-wrap:anywhere}
+.pv-note{position:relative;width:100%;max-width:520px;box-sizing:border-box;flex:0 0 auto;max-height:34%;overflow-y:auto;margin:14px 0 0;padding:2px 6px 2px 34px;background:none;border:0;font-size:.95rem;line-height:1.7;color:#475569;text-align:left;word-break:keep-all;overflow-wrap:anywhere}   /* v11.144: 상자 대신 답글 모양 */
+.pv-note::before{content:'';position:absolute;left:14px;top:-14px;width:13px;height:28px;border-left:2px solid #c9d6cd;border-bottom:2px solid #c9d6cd;border-bottom-left-radius:10px}
+.pv-note-who{font-size:.84rem;color:#64748b;margin-bottom:2px}
+.pv-note-who b{color:#2e4a3b;font-weight:800}
+.pv-note-body{color:#334155}
 .pv-meta{font-size:.78rem;color:#94a3b8;margin-top:12px}
 .pv-actions{justify-content:center;margin-top:14px}
 .pv-end{flex-direction:column}
@@ -6269,7 +6273,7 @@ function pvSlideHTML(pp) {
     <div class="pv-by">— ${escapeHTML(pp.author || '익명')} —</div>
     <div class="pv-meta">${timeAgo(pp.at)}${pp.edited ? ' · 수정됨' : ''}</div>
     <div class="bp-actions pv-actions"><button type="button" class="${pp.liked ? 'on' : ''}" id="pvLike-${pp.id}" onclick="pvLike('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
-  </div>${pp.note ? `<div class="pv-note">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div>` : ''}</section>`;   // v11.141: 이야기 상자를 명언 상자 아래(밖)로
+  </div>${pp.note ? `<div class="pv-note"><div class="pv-note-who"><b>${escapeHTML(pp.author || '익명')}</b> 님의 이야기</div><div class="pv-note-body">${escapeHTML(pp.note).replace(/\n/g, '<br>')}</div></div>` : ''}</section>`;   // v11.141: 이야기 상자를 명언 상자 아래(밖)로
 }
 function pvOnScroll() {
   const tr = document.getElementById('pvTrack'), c = document.getElementById('pvCount'); if (!tr || !c) return;
