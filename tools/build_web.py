@@ -117,14 +117,20 @@ def main():
         copy_app(www)
         print('웹 앱만 바꿈 (q/·og/ 그대로)')
         return
-    if os.path.isdir(OUT):
-        shutil.rmtree(OUT)
-    os.makedirs(OUT)
+    pages_only = '--pages-only' in sys.argv   # v11.136: q/ 페이지(제목·설명)만 다시 쓰고 og/ 그림은 그대로 (그림 만들기는 10분 넘게 걸림)
+    if pages_only:
+        shutil.rmtree(os.path.join(OUT, 'q'), ignore_errors=True)
+    else:
+        if os.path.isdir(OUT):
+            shutil.rmtree(OUT)
+        os.makedirs(OUT)
     copy_app(www)
     for name in os.listdir(os.path.join(ROOT, 'firebase', 'pages')):
         s = os.path.join(ROOT, 'firebase', 'pages', name)
-        (shutil.copytree if os.path.isdir(s) else shutil.copy)(s, os.path.join(OUT, name))
-    os.makedirs(os.path.join(OUT, '.well-known'))
+        d = os.path.join(OUT, name)
+        if os.path.isdir(s): shutil.copytree(s, d, dirs_exist_ok=True)
+        else: shutil.copy(s, d)
+    os.makedirs(os.path.join(OUT, '.well-known'), exist_ok=True)
     with open(os.path.join(OUT, '.well-known', 'assetlinks.json'), 'w') as f:
         json.dump([{'relation': ['delegate_permission/common.handle_all_urls'],
                     'target': {'namespace': 'android_app', 'package_name': 'com.geuljaguk.app', 'sha256_cert_fingerprints': SHA256}}], f, indent=2)
@@ -133,15 +139,15 @@ def main():
     quotes = quotes_from_html(h)
     icon = Image.open(os.path.join(ROOT, 'android', 'app', 'src', 'main', 'res', 'mipmap-xxxhdpi', 'ic_launcher.png')).convert('RGBA').resize((46, 46), Image.LANCZOS)
     m = Image.new('L', (46, 46), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, 45, 45), radius=11, fill=255); icon.putalpha(m)
-    os.makedirs(os.path.join(OUT, 'og')); os.makedirs(os.path.join(OUT, 'q'))
+    os.makedirs(os.path.join(OUT, 'og'), exist_ok=True); os.makedirs(os.path.join(OUT, 'q'), exist_ok=True)
     for q in quotes:
         i = q['id']; t = q['text'].replace('\n', ' ')
-        title = html.escape(f'“{t}”'); desc = html.escape(f"— {q['author']} · 친구가 보낸 오늘의 한 줄 | 글자국")
+        title = '글자국'; desc = '친구가 보낸 오늘의 한 줄'   # v11.136: 카톡·문자 미리보기 제목은 '글자국', 설명에 작가 이름 넣지 않음 (명언은 그림에 있음)
         os.makedirs(os.path.join(OUT, 'q', str(i)))
         with open(os.path.join(OUT, 'q', str(i), 'index.html'), 'w', encoding='utf-8') as f:
             f.write(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title} — 글자국</title>
+<title>{title}</title>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="글자국">
 <meta property="og:title" content="{title}">
@@ -155,7 +161,8 @@ def main():
 <script>location.replace('/?s={i}' + (location.search ? '&' + location.search.slice(1) : ''));</script>
 </head><body style="background:#f4efe4"></body></html>
 ''')
-        og_image(q, icon, os.path.join(OUT, 'og', f'{i}.png'))
+        if not pages_only:
+            og_image(q, icon, os.path.join(OUT, 'og', f'{i}.png'))
     print(f'웹 준비 완료 — 명언 {len(quotes)}개 (q/ 페이지, og/ 그림)')
 
 if __name__ == '__main__':
