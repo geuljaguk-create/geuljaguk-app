@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="w_line_small">오늘의 한 줄 (작게)</string>
-    <string name="w_line_wide">오늘의 한 줄 (넓게)</string>
+    <string name="w_line_small">지금의 명언 (작게)</string>
+    <string name="w_line_wide">지금의 명언 (넓게)</string>
     <string name="w_quote_small">오늘의 명언 (작게)</string>
     <string name="w_quote_wide">오늘의 명언 (넓게)</string>
     <string name="w_line_desc">클릭하면 시간대에 맞는 명언을 보여줘요.</string>

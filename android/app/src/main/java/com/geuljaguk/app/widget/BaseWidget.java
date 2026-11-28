@@ -13,7 +13,7 @@ import com.geuljaguk.app.MainActivity;
 import com.geuljaguk.app.R;
 import java.util.Calendar;
 
-/** 홈 화면 위젯 공통: '오늘의 명언'(quoteMode=true, v11.134 이름 변경) / '오늘의 한 줄'(false) */
+/** 홈 화면 위젯 공통: '오늘의 명언'(quoteMode=true, v11.134 이름 변경) / '지금의 명언'(false, v11.139 이름 변경) */
 public abstract class BaseWidget extends AppWidgetProvider {
     protected abstract int layout();
     protected abstract boolean quoteMode();
