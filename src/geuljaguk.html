@@ -6216,7 +6216,7 @@ function renderBoard() {
         ${pp.mine ? `<button type="button" class="bp-more" aria-label="내 명언 메뉴" onclick="openMyPostMenu('${pp.id}')"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>` : ''}</div>
       <div class="bp-text bp-quote-text">${escapeHTML(pp.text).replace(/\n/g, '<br>')}</div>
       <div class="bp-by">— ${escapeHTML(pp.author || '익명')} —</div>
-      ${pp.note ? '<div class="bp-note-hint">📖 담긴 이야기가 있어요 · 눌러서 보기</div>' : ''}   <!-- v11.128: 이야기는 목록에서 숨기고, 눌러서 크게 볼 때만 -->
+      ${pp.note ? '<div class="bp-note-hint">📖 담긴 이야기가 있어요. 눌러서 확인하기</div>' : ''}   <!-- v11.128·142: 이야기는 목록에서 숨기고, 눌러서 크게 볼 때만 -->
       <div class="bp-actions"><button type="button" class="${pp.liked ? 'on' : ''}" onclick="likePost('${pp.id}')">${pp.liked ? '♥' : '♡'} 공감 ${pp.likes}</button><button type="button" onclick="openPostComments('${pp.id}')">💬 댓글 ${postCommentCount(pp)}</button></div>
     </div>`;
   }).join('') + (boardHasMore ? `<button type="button" class="load-more" id="boardMore" onclick="loadMorePosts()">${boardSort === 'likes' ? '명언 더 보기' : '이전 명언 더 보기'}</button>` : '');

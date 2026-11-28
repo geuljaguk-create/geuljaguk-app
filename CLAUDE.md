@@ -1,6 +1,6 @@
 # 글자국 — 작업 메모 (Claude용)
 
-- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.141).
+- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.142).
 - 사용자용·운영자용 두 가지를 **항상 같이** 만든다. 차이는 `const ADMIN_BUILD = true/false;` 한 줄뿐이며 `tools/prepare_www.py --admin` 이 바꿔 준다. 원본 HTML은 `false`(사용자용)로 둔다.
 - 배경음악 기능은 v11.123에서 제거했다(음악 탭·설정 줄·이용 팁·음악 파일 삭제, `bgmOn`은 항상 false). 되살리려면 v11.122의 git 기록에서 `bgmdata-*` 블록을 가져온다.
 - 빌드: `npm ci`(postinstall로 patch-package가 카카오 플러그인의 옛 jcenter 저장소를 고침) → `bash tools/build.sh` → `out/글자국-사용자용.apk`, `out/글자국-운영자용.apk`. Android SDK·JDK 21 필요. Claude 작업 공간에서는 gradlew 다운로드가 막혀 `GRADLE=gradle bash tools/build.sh`, Maven Central 429가 나면 몇 번 다시 시도.
@@ -33,3 +33,4 @@
 - v11.139: 한 줄 위젯 이름 '지금의 명언 (작게/넓게)'(위젯 안 윗줄 '○○의 한 줄'은 그대로).
 - v11.140: 홈 상자 위 '함께 공감한 명언' → '가장 많이 공감한 명언'(운영자 고정 시 '오늘의 추천 명언').
 - v11.141: 오늘의 내 명언 크게 보기에서 이야기 상자(.pv-note)를 명언 상자(.pv-card) 아래·밖으로 옮김.
+- v11.142: 목록 카드 안내 '📖 담긴 이야기가 있어요. 눌러서 확인하기'.
