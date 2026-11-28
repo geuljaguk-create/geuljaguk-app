@@ -1624,7 +1624,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
       </svg>
       <nav class="book-toc" aria-label="목차">
         <h4>목 차</h4>
-        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="오늘의 내 명언 열기"><span class="toc-best-t">오늘의 내 명언</span><span class="tc-best-label" id="topBestLabel">함께 공감한 명언</span><span class="toc-sub" id="topComment"></span></div>
+        <div class="toc-row toc-two toc-best" onclick="goTopComment()" role="button" aria-label="오늘의 내 명언 열기"><span class="toc-best-t">오늘의 내 명언</span><span class="tc-best-label" id="topBestLabel">가장 많이 공감한 명언</span><span class="toc-sub" id="topComment"></span></div>
         <div class="toc-trio toc-duo">
           <button type="button" class="toc-tile" onclick="openLibraryModal('likes')">내 보관함</button>
           <button type="button" class="toc-tile" onclick="openSearchModal()">검색</button>
@@ -4318,7 +4318,7 @@ async function renderTopComment() {
     if (pk && pk.postId && pk.day === kstDay(Date.now())) pick = findPost(pk.postId) || await getBoard().get(pk.postId);
     if (pick && !isVisible(pick)) pick = null;
   } catch (e) { pick = null; }
-  if (lab) lab.textContent = pick ? '오늘의 추천 명언' : '함께 공감한 명언';
+  if (lab) lab.textContent = pick ? '오늘의 추천 명언' : '가장 많이 공감한 명언';   // v11.140
   /* v11.128: '오늘의 BEST 명언' — 오늘 올라온 글 중 공감이 가장 많은 글 (같으면 최근 글) */
   if (!pick) try { pick = (await getBoard().latest(20)).filter(isVisible).filter(x => !lsGet('reportedIds', []).includes('post_' + x.id)).filter(x => x.at >= todayStart()).sort((a, b) => b.likes - a.likes || b.at - a.at)[0] || null; } catch (e) {}
   topCommentQid = null;
