@@ -1552,6 +1552,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .bpf-send{border:0;background:#2e4a3b;color:#fff;font-family:inherit;font-weight:800;font-size:.95rem;border-radius:999px;padding:9px 20px;cursor:pointer}
 .bpf-send:disabled{background:#b7c4bb}
 .bpf-body{flex:1;overflow-y:auto;padding:0 26px calc(30px + env(safe-area-inset-bottom,0px))}
+.bpf-once{margin-top:14px;padding:10px 14px;border-radius:12px;background:#eef3ef;color:#2e4a3b;font-size:.9rem;font-weight:600;line-height:1.5;word-break:keep-all}
 .bpf-mark{font-family:'Nanum Myeongjo',serif;font-size:4.4rem;line-height:1;color:#dfe7e1;margin:26px 0 -6px -4px;user-select:none}
 .bp-compose.bp-full textarea.bpf-quote,.bp-compose.bp-full textarea.bpf-quote:focus{display:block;max-height:none;border-radius:0;width:100%;box-sizing:border-box;border:0;outline:0;resize:none;background:none;padding:0;font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:1.5rem;line-height:1.7;color:#1d2a22;min-height:120px;overflow:hidden;word-break:keep-all}
 .bpf-quote::placeholder{color:#b8c0bb;font-weight:800}
@@ -6563,6 +6564,7 @@ async function openBoardCompose(editId) {
     <div class="bpf" role="dialog" aria-label="${title}">
       <div class="bpf-top"><button type="button" class="bpf-cancel" onclick="closeBoardCompose()">취소</button><b>${title}</b><button type="button" class="bpf-send" id="bpSend" onclick="submitPost()" disabled>${pp ? '고치기' : '올리기'}</button></div>
       <div class="bpf-body">
+        ${!pp && !localStorage.getItem('boardFirstPostDone') ? '<div class="bpf-once">📅 명언 제작소에는<br>하루에 한 번 명언을 올릴 수 있어요.</div>' : ''}
         <div class="bpf-mark" aria-hidden="true">“</div>
         <textarea id="bpText" class="bpf-quote" rows="3" maxlength="${BOARD_MAX}" placeholder="오늘 마음에 남은&#10;한 문장을&#10;적어 주세요" oninput="onBoardInput()" aria-label="명언"></textarea>
         <div class="bpf-count" id="bpCount">0/${BOARD_MAX}</div>
@@ -6641,6 +6643,7 @@ async function submitPost() {
     notePost(); triggerHaptic(); closeBoardCompose();
     boardSort = 'recent'; renderBoard(); document.getElementById('boardList').scrollTop = 0;
     showToast('명언이 등록되었어요 📝');
+    try { localStorage.setItem('boardFirstPostDone', '1'); } catch (e) {}   // v11.155: 첫 글을 올린 뒤에는 '하루 한 번' 안내를 숨김
     if (!localStorage.getItem('pushAsked')) { try { localStorage.setItem('pushAsked', '1'); } catch (e) {} setTimeout(() => Push.sync(true), 1200); }
   } catch (e) { const mm = /permission/i.test(errCode(e)) ? await mutedMsg() : ''; if (mm) { showToast(mm); boardSending = false; onBoardInput(); return; } showToast(/permission/i.test(errCode(e)) ? (await postedToday() ? DAILY_MSG : '글은 10초에 한 번 남길 수 있어요.\n잠시 후 다시 남겨 주세요.') : '등록하지 못했어요.\n잠시 후 다시 시도해 주세요.'); }
   boardSending = false; onBoardInput();

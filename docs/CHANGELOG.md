@@ -35,3 +35,4 @@ CLAUDE.md에서 옮겨 온 버전별 기록. 새 기록은 여기 아래에 덧�
 - v11.152 빌드: test77 (versionCode 74).
 - v11.153: compileSdk·targetSdk 35 → 36(Android 16, 플레이 제출 요건). test78 빌드(versionCode 75) — 휴대폰에서 위아래 여백·뒤로 가기 확인 필요.
 - v11.154: 명언 제작소 정렬 옆에 보기 버튼(#boardView, toggleBoardView) — 두 줄(기본) ↔ 한 줄(#boardList.one-col), localStorage boardView로 기억.
+- v11.155: 명언 제작소 작성 창 맨 위에 '📅 명언 제작소에는 하루에 한 번 명언을 올릴 수 있어요.' — 첫 글을 올리기 전까지만(localStorage boardFirstPostDone).
