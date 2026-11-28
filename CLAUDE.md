@@ -1,6 +1,6 @@
 # 글자국 — 작업 메모 (Claude용)
 
-- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.131).
+- 앱 본체는 `src/geuljaguk.html` 한 파일. 기능 수정은 이 파일에서 하고, 버전 주석은 `v11.NNN:` 형식으로 남긴다 (현재 v11.132).
 - 사용자용·운영자용 두 가지를 **항상 같이** 만든다. 차이는 `const ADMIN_BUILD = true/false;` 한 줄뿐이며 `tools/prepare_www.py --admin` 이 바꿔 준다. 원본 HTML은 `false`(사용자용)로 둔다.
 - 배경음악 기능은 v11.123에서 제거했다(음악 탭·설정 줄·이용 팁·음악 파일 삭제, `bgmOn`은 항상 false). 되살리려면 v11.122의 git 기록에서 `bgmdata-*` 블록을 가져온다.
 - 빌드: `npm ci`(postinstall로 patch-package가 카카오 플러그인의 옛 jcenter 저장소를 고침) → `bash tools/build.sh` → `out/글자국-사용자용.apk`, `out/글자국-운영자용.apk`. Android SDK·JDK 21 필요. Claude 작업 공간에서는 gradlew 다운로드가 막혀 `GRADLE=gradle bash tools/build.sh`, Maven Central 429가 나면 몇 번 다시 시도.
@@ -23,4 +23,4 @@
 - v11.129: 이름을 '오늘의 내 명언'으로(홈 상자·목록·쓰기 창·알림·이용 팁), 홈 상자 위 '함께 공감한 명언'.
 - `firebase/deploy-windows.bat`는 반드시 CRLF 줄바꿈 유지(.gitattributes). 파이썬 등으로 고칠 때 LF로 바뀌면 윈도우에서 명령이 깨진다. zip을 보내기 전 `file`로 'CRLF line terminators' 확인.
 - v11.130 운영자 관리(운영자용에서만): 📊 오늘 숫자(집계 쿼리), 🚨 신고, 🚫 금칙어 추가(config/badwords → 모든 앱이 하루 한 번 받아 BAD_EXTRA로 검사), 📌 오늘의 추천 고정(config/pick, 홈 상자 '오늘의 추천 명언'), 📜 처리 기록(adminLog, 고치기·지우기 불가). 규칙: users list는 운영자만.
-- v11.131 최종 문구 점검: 토스트·안내 문장을 해요체로 통일(…되었습니다 → …했어요), 신고·삭제 문구를 '명언'으로 맞춤, 쓰지 않던 askExactAlarm 삭제, 운영자 신고 처리에서 명언 삭제 시 '명언을 삭제했어요' 표시.
+- v11.132 문구 원칙(사용자 지시): 기존 안내 말투를 해요체로 바꾸지 않는다. **설정이 바뀌는 안내**(배경·글씨·글씨체·알림 켜기/추가/삭제·진동·날씨 문구·글상자·로그인/로그아웃·닉네임·프로필 사진·차단 해제)는 '…되었습니다/했습니다'로 쓴다. 그 밖의 안내·오류는 원래 말투 유지. (v11.131의 해요체 통일은 되돌림) 신고·삭제 문구는 '명언'으로 맞춤, askExactAlarm 삭제.
