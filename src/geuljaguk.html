@@ -1461,6 +1461,7 @@ button:active,.theme-card:active,.mood-opt:active,.toc-tile:active,.settings-nav
 .board-intro-ico{font-size:2.1rem;line-height:1;margin-bottom:10px}
 .board-intro-box h3{margin:0 0 14px;font-size:1.2rem;font-weight:800;color:#2e4a3b}
 .board-intro-box p{margin:0 0 10px;font-size:.96rem;line-height:1.7;color:#334155;word-break:keep-all}
+.board-intro-sub{font-size:.86rem!important;color:#64748b!important}
 .board-intro-btn{margin-top:12px;width:100%;padding:14px;border:0;border-radius:14px;background:#2e4a3b;color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer}
 /* v11.127: 긴 문장(띄어쓰기 없는 글 포함)은 칸을 넘지 않고 줄바꿈 — 홈 상자는 3줄까지 보이고 나머지는 … */
 #homeHeader .toc-best .toc-sub.has{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden!important}
@@ -6396,6 +6397,24 @@ function showBoardIntro() {
       <button type="button" class="board-intro-btn" onclick="closeBoardIntro()">시작하기</button>
     </div></div>`);
 }
+/* v11.155: 명언 제작소에 처음 글을 쓸 때 한 번만 — 하루에 한 번만 올릴 수 있다는 안내 */
+function askDailyInfo() {
+  return new Promise(resolve => {
+    const pg = document.getElementById('boardPage'); if (!pg) return resolve(true);
+    pg.insertAdjacentHTML('beforeend', `<div class="board-intro" id="dailyInfo" role="dialog" aria-modal="true" aria-labelledby="dailyInfoT">
+      <div class="board-intro-box">
+        <div class="board-intro-ico">🗓️</div>
+        <h3 id="dailyInfoT">명언은 하루에 한 번</h3>
+        <p>명언 제작소에는 하루에 한 번<br>명언을 올릴 수 있어요.</p>
+        <p>오늘 마음에 가장 남은 한 문장을<br>천천히 골라 적어 보세요.</p>
+        <p class="board-intro-sub">올린 명언은 나중에 고칠 수 있고,<br>새 명언은 내일 다시 쓸 수 있어요.</p>
+        <button type="button" class="board-intro-btn" id="dailyInfoOk">확인했어요</button>
+      </div></div>`);
+    const el = document.getElementById('dailyInfo');
+    document.getElementById('dailyInfoOk').onclick = () => { triggerHaptic(); try { localStorage.setItem('postDailyInfoSeen', '1'); } catch (e) {} el.remove(); resolve(true); };
+    el.onclick = e => { if (e.target === el) { el.remove(); resolve(false); } };
+  });
+}
 function closeBoardIntro() {
   triggerHaptic(); localStorage.setItem('boardIntroSeen', '1');
   const el = document.getElementById('boardIntro'); if (el) el.remove();
@@ -6547,6 +6566,7 @@ async function openBoardCompose(editId) {
   triggerHaptic(); closeBoardCompose();
   if (!editId && await postedToday()) { showToast(DAILY_MSG); return; }
   if (!editId && !localStorage.getItem('communityTermsAgreed') && !(await askTerms())) return;   // v11.146·147: 작성 창을 열기 전에 이용 규칙부터
+  if (!editId && !localStorage.getItem('postDailyInfoSeen') && !(await askDailyInfo())) return;   // v11.155: 처음 쓸 때 '하루에 한 번' 안내
   const pp = editId ? findPost(editId) : null; if (editId && (!pp || !pp.mine)) return;
   boardEditId = pp ? pp.id : null;
   /* v11.148: 여백 가득한 전체 화면 작성 창 — 큰 따옴표 + 큰 명조 글씨, 이야기는 '더하기'를 눌렀을 때만 */
