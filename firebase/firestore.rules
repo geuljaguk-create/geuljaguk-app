@@ -117,7 +117,7 @@ service cloud.firestore {
     function postEditUpdate() {
       let a = request.resource.data; let b = resource.data;
       return a.diff(b).affectedKeys().hasOnly(['text','by','note','editedAt'])
-        && !('editedAt' in b)   // v11.155: 명언은 한 번만 수정
+        && !('editedAt' in b)   // v11.156: 명언은 한 번만 수정
         && postExtrasOk(a)
         && b.authorUid == request.auth.uid
         && a.text is string && a.text.size() > 0 && a.text.size() <= 50 && okChars(a.text)

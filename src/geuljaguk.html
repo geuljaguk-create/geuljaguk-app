@@ -6569,7 +6569,7 @@ async function openBoardCompose(editId) {
   if (!editId && !localStorage.getItem('communityTermsAgreed') && !(await askTerms())) return;   // v11.146·147: 작성 창을 열기 전에 이용 규칙부터
   if (!editId && !localStorage.getItem('postDailyInfoSeen') && !(await askDailyInfo())) return;   // v11.155: 처음 쓸 때 '하루에 한 번' 안내
   const pp = editId ? findPost(editId) : null; if (editId && (!pp || !pp.mine)) return;
-  if (pp && pp.edited) { showToast('명언은 한 번만 수정할 수 있어요.'); return; }   // v11.155
+  if (pp && pp.edited) { showToast('명언은 한 번만 수정할 수 있어요.'); return; }   // v11.156
   boardEditId = pp ? pp.id : null;
   /* v11.148: 여백 가득한 전체 화면 작성 창 — 큰 따옴표 + 큰 명조 글씨, 이야기는 '더하기'를 눌렀을 때만 */
   const title = pp ? '명언 고치기' : '명언 제작소';

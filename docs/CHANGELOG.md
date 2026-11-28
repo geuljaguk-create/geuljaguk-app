@@ -38,4 +38,4 @@ CLAUDE.md에서 옮겨 온 버전별 기록. 새 기록은 여기 아래에 덧�
 - v11.155: 명언 제작소 작성 창 맨 위에 '📅 명언 제작소에는 하루에 한 번 명언을 올릴 수 있어요.' — 첫 글을 올리기 전까지만(localStorage boardFirstPostDone).
 - v11.155: 명언 제작소에 처음 글을 쓸 때 한 번만 '명언은 하루에 한 번' 안내 창(askDailyInfo, localStorage postDailyInfoSeen) — 이용 규칙 동의 다음, 작성 창 전.
 - v11.154 빌드: test79 (versionCode 76), Firebase zip v11.154.
-- v11.155: 명언 제작소 쪽지에 '· 수정됨' 표시, 명언은 한 번만 수정(앱: 메뉴에 '이미 한 번 수정한 명언이에요', 작성 창 경고 / 규칙: postEditUpdate에 !('editedAt' in b)). 규칙 시험 t5.mjs. 빌드 test79 (versionCode 76).
+- v11.156: 명언 제작소 쪽지에 '· 수정됨' 표시, 명언은 한 번만 수정(앱: 메뉴에 '이미 한 번 수정한 명언이에요', 작성 창 경고 / 규칙: postEditUpdate에 !('editedAt' in b)). 규칙 시험 t5.mjs. 빌드 test80 (versionCode 77), Firebase zip v11.156 (같은 시각 다른 작업에서 만든 test79·zip v11.154를 대신함).
